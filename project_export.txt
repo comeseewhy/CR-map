@@ -111,6 +111,10 @@
             </div>
           </div>
 
+          <button id="closest-meeting" class="primary-button" type="button">
+            Find closest meeting
+          </button>
+
           <button id="reset-filters" class="reset-button" type="button">
             Reset filters
           </button>
@@ -159,6 +163,9 @@
   --color-background: #f6f6f6;
   --color-soft: #fafafa;
   --color-soft-alt: #f3f4f6;
+  --color-primary: #2457a6;
+  --color-primary-hover: #1d4789;
+  --color-primary-soft: #eef4ff;
 }
 
 html,
@@ -358,12 +365,40 @@ a {
   background: rgba(123, 76, 226, 0.16);
 }
 
+.primary-button,
 .reset-button {
   padding: 10px 12px;
-  border: 1px solid #cccccc;
   border-radius: 8px;
-  background: #ffffff;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.primary-button {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.primary-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.primary-button:focus-visible,
+.reset-button:focus-visible {
+  outline: 2px solid #1f1f1f;
+  outline-offset: 2px;
+}
+
+.reset-button {
+  border: 1px solid #cccccc;
+  background: #ffffff;
 }
 
 .reset-button:hover {
@@ -412,7 +447,7 @@ a {
 
 .location-card.is-selected {
   border-color: #1f1f1f;
-  background: #eef4ff;
+  background: var(--color-primary-soft);
 }
 
 .location-card.day-monday {
@@ -605,6 +640,7 @@ a {
 ===== app.js =====
 const ONTARIO_CENTER = [43.7, -79.4];
 const INITIAL_ZOOM = 6;
+const FOCUSED_ZOOM = 11;
 
 const DAY_CONFIG = {
   Monday: {
@@ -659,6 +695,7 @@ const statusEl = document.getElementById('status');
 const locationListEl = document.getElementById('location-list');
 const searchInputEl = document.getElementById('search-input');
 const resetFiltersEl = document.getElementById('reset-filters');
+const closestMeetingEl = document.getElementById('closest-meeting');
 const dayToggleGroupEl = document.getElementById('day-toggle-group');
 const dayToggleEls = Array.from(document.querySelectorAll('.day-toggle'));
 
@@ -675,6 +712,10 @@ const markersLayer = L.layerGroup().addTo(map);
 let allRows = [];
 let filteredRows = [];
 let selectedOrgId = null;
+let closestResult = null;
+let isLocatingUser = false;
+let shouldAutoFitMap = true;
+
 const markerByOrgId = new Map();
 const activeDays = new Set();
 
@@ -773,6 +814,60 @@ function formatMeetingLine(row) {
   return 'Meeting time not listed';
 }
 
+function toRadians(value) {
+  return (value * Math.PI) / 180;
+}
+
+function calculateDistanceKm(fromLat, fromLng, toLat, toLng) {
+  const earthRadiusKm = 6371;
+  const deltaLat = toRadians(toLat - fromLat);
+  const deltaLng = toRadians(toLng - fromLng);
+
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(toRadians(fromLat)) *
+      Math.cos(toRadians(toLat)) *
+      Math.sin(deltaLng / 2) *
+      Math.sin(deltaLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+}
+
+function formatDistanceKm(distanceKm) {
+  if (!Number.isFinite(distanceKm)) {
+    return '';
+  }
+
+  if (distanceKm < 10) {
+    return `${distanceKm.toFixed(1)} km away`;
+  }
+
+  return `${Math.round(distanceKm)} km away`;
+}
+
+function getCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by this browser.'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 300000
+    });
+  });
+}
+
+function setClosestButtonLoading(isLoading) {
+  isLocatingUser = isLoading;
+  closestMeetingEl.disabled = isLoading;
+  closestMeetingEl.textContent = isLoading ? 'Finding closest meeting…' : 'Find closest meeting';
+}
+
 function buildPopupHtml(row) {
   const name = escapeHtml(row.name || 'Unnamed location');
   const address = escapeHtml(row.address || 'Address unavailable');
@@ -787,6 +882,9 @@ function buildPopupHtml(row) {
     : '';
 
   const cityProvinceLine = [city, province].filter(Boolean).join(', ');
+  const distanceHtml = Number.isFinite(row.distanceKm)
+    ? `<p class="popup-line"><strong>${escapeHtml(formatDistanceKm(row.distanceKm))}</strong></p>`
+    : '';
 
   const websiteHtml = website
     ? `<p class="popup-line"><a href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Visit website</a></p>`
@@ -802,6 +900,7 @@ function buildPopupHtml(row) {
       <p class="popup-line">${address}</p>
       <p class="popup-line">${cityProvinceLine || 'Location details unavailable'}</p>
       <p class="popup-line">${meetingLine}</p>
+      ${distanceHtml}
       ${badgeHtml}
       ${notesHtml}
       ${websiteHtml}
@@ -899,6 +998,9 @@ function renderLocationList(rows) {
       [row.city || '', row.province || ''].filter(Boolean).join(', ')
     );
     const safeMeetingLine = escapeHtml(formatMeetingLine(row));
+    const safeDistance = Number.isFinite(row.distanceKm)
+      ? `<p><strong>${escapeHtml(formatDistanceKm(row.distanceKm))}</strong></p>`
+      : '';
     const dayConfig = getDayConfig(row.meeting_day);
     const cardDayClass = dayConfig ? dayConfig.cardClass : '';
     const badgeHtml = dayConfig
@@ -916,6 +1018,7 @@ function renderLocationList(rows) {
         <p>${safeAddress}</p>
         <p>${safeCityProvince || 'Location details unavailable'}</p>
         <p>${safeMeetingLine}</p>
+        ${safeDistance}
         ${badgeHtml}
       </button>
     `;
@@ -928,7 +1031,7 @@ function fitMapToRows(rows) {
     .map((row) => [row.lat, row.lng]);
 
   if (bounds.length === 1) {
-    map.setView(bounds[0], 11);
+    map.setView(bounds[0], FOCUSED_ZOOM);
     return;
   }
 
@@ -950,7 +1053,9 @@ function renderMarkers(rows) {
 
     marker.on('click', () => {
       selectedOrgId = row.org_id;
+      closestResult = row;
       renderLocationList(filteredRows);
+      scrollSelectedCardIntoView();
     });
 
     marker.addTo(markersLayer);
@@ -982,6 +1087,33 @@ function updateStatus(rows) {
   statusEl.textContent = `Showing ${shown} of ${total} locations (${activeDayNames.join(', ')}).`;
 }
 
+function clearDistanceData() {
+  allRows.forEach((row) => {
+    delete row.distanceKm;
+  });
+
+  closestResult = null;
+}
+
+function scrollSelectedCardIntoView() {
+  if (!selectedOrgId) {
+    return;
+  }
+
+  const selectedCard = locationListEl.querySelector(
+    `.location-card[data-org-id="${CSS.escape(String(selectedOrgId))}"]`
+  );
+
+  if (!selectedCard) {
+    return;
+  }
+
+  selectedCard.scrollIntoView({
+    block: 'nearest',
+    behavior: 'smooth'
+  });
+}
+
 function applyFilters() {
   const searchTerm = normalizeSearchTerm(searchInputEl.value);
 
@@ -1002,10 +1134,25 @@ function applyFilters() {
   renderMarkers(filteredRows);
   renderLocationList(filteredRows);
   updateStatus(filteredRows);
-  fitMapToRows(filteredRows);
+
+  if (shouldAutoFitMap) {
+    fitMapToRows(filteredRows);
+  } else if (selectedOrgId) {
+    const marker = markerByOrgId.get(String(selectedOrgId));
+
+    if (marker) {
+      const latLng = marker.getLatLng();
+      map.setView(latLng, Math.max(map.getZoom(), FOCUSED_ZOOM), { animate: false });
+    }
+  }
 }
 
-function focusLocation(orgId) {
+function focusLocation(orgId, options = {}) {
+  const {
+    openPopup = true,
+    keepCurrentZoom = false
+  } = options;
+
   const marker = markerByOrgId.get(String(orgId));
 
   if (!marker) {
@@ -1013,11 +1160,18 @@ function focusLocation(orgId) {
   }
 
   selectedOrgId = orgId;
+  shouldAutoFitMap = false;
   renderLocationList(filteredRows);
+  scrollSelectedCardIntoView();
 
   const latLng = marker.getLatLng();
-  map.setView(latLng, Math.max(map.getZoom(), 11), { animate: true });
-  marker.openPopup();
+  const nextZoom = keepCurrentZoom ? map.getZoom() : Math.max(map.getZoom(), FOCUSED_ZOOM);
+
+  map.setView(latLng, nextZoom, { animate: true });
+
+  if (openPopup) {
+    marker.openPopup();
+  }
 }
 
 function toggleDay(day) {
@@ -1025,21 +1179,93 @@ function toggleDay(day) {
     return;
   }
 
+  shouldAutoFitMap = true;
+  selectedOrgId = null;
+  clearDistanceData();
+
   if (activeDays.has(day)) {
     activeDays.delete(day);
   } else {
     activeDays.add(day);
   }
 
-  selectedOrgId = null;
   applyFilters();
 }
 
 function resetFilters() {
   searchInputEl.value = '';
   selectedOrgId = null;
+  shouldAutoFitMap = true;
   activeDays.clear();
+  clearDistanceData();
   applyFilters();
+}
+
+async function findClosestMeeting() {
+  if (isLocatingUser) {
+    return;
+  }
+
+  if (!filteredRows.length) {
+    statusEl.textContent = 'No displayed locations are available to compare right now.';
+    return;
+  }
+
+  setClosestButtonLoading(true);
+  statusEl.textContent = 'Finding your location…';
+
+  try {
+    const position = await getCurrentPosition();
+    const userLat = position.coords.latitude;
+    const userLng = position.coords.longitude;
+
+    filteredRows.forEach((row) => {
+      row.distanceKm = calculateDistanceKm(userLat, userLng, row.lat, row.lng);
+    });
+
+    let closestRow = null;
+
+    filteredRows.forEach((row) => {
+      if (!closestRow || row.distanceKm < closestRow.distanceKm) {
+        closestRow = row;
+      }
+    });
+
+    if (!closestRow) {
+      statusEl.textContent = 'Could not determine the closest meeting.';
+      return;
+    }
+
+    closestResult = closestRow;
+    selectedOrgId = closestRow.org_id;
+    shouldAutoFitMap = false;
+
+    renderMarkers(filteredRows);
+    renderLocationList(filteredRows);
+    focusLocation(closestRow.org_id);
+
+    statusEl.textContent = `Closest displayed meeting: ${closestRow.name} (${formatDistanceKm(closestRow.distanceKm)}).`;
+  } catch (error) {
+    if (error && typeof error.code === 'number') {
+      switch (error.code) {
+        case 1:
+          statusEl.textContent = 'Location permission was denied. Please allow location access to find the closest meeting.';
+          break;
+        case 2:
+          statusEl.textContent = 'Your location could not be determined right now.';
+          break;
+        case 3:
+          statusEl.textContent = 'Location request timed out. Please try again.';
+          break;
+        default:
+          statusEl.textContent = 'Could not access your location right now.';
+      }
+    } else {
+      statusEl.textContent = error.message || 'Could not access your location right now.';
+    }
+  } finally {
+    setClosestButtonLoading(false);
+  }
 }
 
 async function loadLocations() {
@@ -1084,8 +1310,15 @@ async function loadLocations() {
   fitMapToRows(filteredRows);
 }
 
-searchInputEl.addEventListener('input', applyFilters);
+searchInputEl.addEventListener('input', () => {
+  shouldAutoFitMap = true;
+  selectedOrgId = null;
+  clearDistanceData();
+  applyFilters();
+});
+
 resetFiltersEl.addEventListener('click', resetFilters);
+closestMeetingEl.addEventListener('click', findClosestMeeting);
 
 dayToggleGroupEl.addEventListener('click', (event) => {
   const toggleButton = event.target.closest('.day-toggle');
@@ -1110,4 +1343,4 @@ locationListEl.addEventListener('click', (event) => {
 loadLocations();
 
 
-Generated: 03/28/2026 15:21:47
+Generated: 03/28/2026 15:37:35

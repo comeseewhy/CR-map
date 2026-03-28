@@ -1,198 +1,258 @@
-Phase 1 — Fix layout containment first
+1. Cross-reference: Plan vs Current State
+✅ Phase 1 — Layout containment
 
-This should be the immediate priority.
+Status: COMPLETE (well executed)
 
-Right now the sidebar content is driving page height beyond the intended viewport, instead of staying inside a fixed application frame with its own internal scroll. In your current CSS, the sidebar has overflow-y: auto, but the overall layout still allows the page to grow with content rather than keeping the app locked to the map-height experience.
+App is locked to viewport (#app { height: 100vh })
+Sidebar scroll is internal (location-list overflow-y)
+Map stays contained
+Mobile fallback handled
 
-Goal
+This matches your intended behavior almost exactly
 
-Make the app behave like this:
+Verdict: Done. No need to revisit.
 
-header at top
-map + sidebar fill the remaining viewport height
-page itself does not keep extending downward
-sidebar gets its own vertical scrollbar
-map stays visually contained to the app frame
-What to change conceptually
-lock the app shell to viewport height
-ensure the grid container and both panels can shrink within that height
-give the sidebar a scrollable inner content area
-avoid letting the whole document become taller than the viewport on desktop
-Why this comes first
+✅ Phase 2 — Multi-day toggle filters
 
-Every other UI improvement will feel messy until the layout containment is correct.
+Status: COMPLETE (and clean)
 
-Phase 2 — Replace single day dropdown with multi-toggle day filters
+Set activeDays implemented
+Toggle buttons with aria-pressed
+Combined filtering logic works correctly
+Reset works
 
-This is your best feature upgrade.
+This is exactly the model suggested in your plan
 
-Your current implementation uses one day dropdown, which only allows one selected day at a time.
-Your intended interaction is better: all seven days visible as toggle chips/buttons, each independently on/off, with combined filtering applied instantly.
+Verdict: Strong implementation.
 
-Goal
+✅ Phase 3 — Day-based marker colours
 
-Users should be able to:
+Status: COMPLETE (and correctly done)
 
-click Monday on/off
-click Tuesday on/off
-select any combination of days
-see markers and location cards update immediately
-keep search and hybrid filters working alongside day toggles
-Recommended model
+Uses L.divIcon (good call)
+Consistent color system across:
+markers
+cards (border-left)
+badges
+toggles
 
-Use a Set of active days in app.js, something like:
+This is textbook execution of the intended design
 
-no active days = show all days
-one or more active days = only show matching rows
-Why this is better
+Verdict: Done properly.
 
-It matches the way people actually browse meetings:
+🟡 Phase 4 — Information hierarchy / UI polish
 
-“show me Tuesday and Thursday”
-“hide Sunday”
-“compare weekday options quickly”
+Status: PARTIALLY COMPLETE
 
-This is much more usable than a dropdown.
+You’ve already improved:
 
-Phase 3 — Introduce day-based marker colours
+spacing
+card structure
+visual grouping
+consistent colour semantics
 
-This is the right moment to add map meaning, not just decoration.
+What’s still missing:
 
-Once days become multi-select toggles, marker colour can reinforce the filter visually.
+stronger “selected” state (currently subtle)
+clearer hierarchy between:
+filters
+results
+tighter visual density (cards still slightly “loose”)
+no “primary action” (this is where Find closest fits)
 
-Recommended system
+Verdict: This phase is where your next UX gains come from.
 
-Assign one consistent colour per day:
+❌ Phase 5 — Logo integration
 
-Monday
-Tuesday
-Wednesday
-Thursday
-Friday
-Saturday
-Sunday
-Important implementation note
+Status: NOT IMPLEMENTED
 
-Default Leaflet markers are image-based and awkward to recolour cleanly. The simplest path is to switch to L.divIcon markers and style them with CSS.
+You’ve added the asset but not placed it.
 
-That will let you:
+🟡 Phase 6 — Accessibility
 
-apply day-specific classes
-keep colours consistent with the filter chips
-avoid image asset complexity
-later support selected/hover states more easily
-Design rule
+Status: PARTIALLY COMPLETE
 
-Keep the colour system consistent across:
+Good:
 
-day toggle buttons
-map markers
-small day badges in cards, if added later
+aria-pressed
+aria-live
+semantic buttons
 
-That consistency will make the interface feel much more intentional.
+Missing:
 
-Phase 4 — Improve information hierarchy and visual structure
+keyboard focus on cards → map sync clarity
+visible focus styling consistency
+status messaging could be more explicit
+🟡 Phase 7 — Code structure
 
-Your current app is readable, but still prototype-like. The next visual pass should focus on clarity and restraint, not ornament.
+Status: MOSTLY GOOD
 
-Priorities
-tighter content width in the sidebar
-more deliberate spacing scale
-stronger card hierarchy
-clearer selected state
-better contrast and focus states
-cleaner mobile stacking behavior
-Specific UI goals
-make the sidebar feel like a controlled panel, not a long page column
-keep filter controls visually grouped and compact
-reduce visual noise in cards
-make the map the main experience, with the list clearly secondary but useful
-Good boundary decisions
-desktop sidebar width: around 340–380px max
-map gets the rest
-content inside sidebar should not feel stretched
-on mobile, filters should remain easy to tap without pushing the map too far down
-Phase 5 — Add the CR logo cleanly
+Your file is already well-organized:
 
-Yes, the logo belongs in the repo.
+constants
+helpers
+rendering
+filters
 
-Best approach
+Minor improvement:
 
-Add it to something like:
+distance / geo logic will need a clean section
+2. Key Missing Features (from your description)
+🔴 1. “Find closest meeting” (core next feature)
 
-/assets/cr-logo.png
+Not implemented yet — this is your biggest functional gap.
 
-Then use it in one of these restrained places:
+🟡 2. External navigation (“Open in Google Maps”)
 
-header beside title
-sidebar header block
-small branded map corner card
-Recommendation
+Not implemented yet, but easy and low-risk.
 
-Start with the header beside the title.
-That is the safest first placement.
+🟡 3. Logo placement
 
-Avoid for now
-oversized watermark on the map
-decorative floating logo without functional purpose
-large image that pushes layout down
+Asset exists but unused.
 
-The logo should support trust and recognition, not compete with the map.
+🟡 4. Minor UX refinements
+search placeholder mismatch (you noted)
+no “primary CTA” in UI
+no distance awareness in list
+3. Geolocation + Distance (Your Questions Answered)
+❓ Do you need an API to calculate distance?
 
-Phase 6 — Accessibility and usability pass
+No.
 
-This should be built into the refactor, not deferred.
+You can compute distance entirely client-side using the
+👉 Haversine formula
 
-Focus areas
-proper button semantics for day toggles
-visible keyboard focus
-sufficient contrast for coloured states
-labels that remain clear without relying only on colour
-tap targets large enough on mobile
-aria-pressed for toggle buttons
-status text that updates when filters change
-Important principle
+This uses lat/lng you already have.
 
-Do not encode day solely by marker colour. Also show the day in text somewhere relevant.
+Implications:
 
-Phase 7 — Small structural cleanup in code
+✅ no API calls
+✅ no cost
+✅ instant performance
+✅ privacy-safe (no server storage)
+❓ How to get user location?
 
-Before the app grows further, it will help to separate responsibilities a bit more in app.js.
+Use browser-native:
 
-Suggested internal sections
-constants and day metadata
-state
-formatting helpers
-filtering logic
-marker rendering
-list rendering
-UI event wiring
-data loading
+navigator.geolocation.getCurrentPosition(...)
 
-You do not need a framework. Just slightly clearer organization.
+Important constraints:
 
-Recommended implementation order
-Step 1
+requires HTTPS (GitHub Pages ✅)
+user must consent
+no storage required (you can keep it in memory only)
+❓ Privacy concern (“don’t store location”)
 
-Fix the layout shell so the page height is contained and the sidebar scrolls internally.
+You’re safe if you:
 
-Step 2
+do NOT send to Supabase
+do NOT persist in localStorage
+just use it in-memory for calculation
+❓ Opening Google Maps without API
 
-Replace the single day dropdown with seven toggle buttons.
+You do NOT need Google Maps API.
 
-Step 3
+Just use a link:
 
-Add day-coloured markers using divIcon.
+https://www.google.com/maps/dir/?api=1&destination=LAT,LNG
 
-Step 4
+Zero cost. Zero auth.
 
-Restyle the filter bar and cards so the day system looks intentional.
+4. Recommended Next 3 Pushes
 
-Step 5
+This is the cleanest execution path.
 
-Add the CR logo from a repo asset.
+🚀 PUSH 1 — Core Feature: “Find closest meeting”
+Add:
+button: "Find closest meeting"
+geolocation request
+Haversine distance calculation
+compare ONLY against filteredRows
+select + zoom to closest result
+UX behavior:
+respects:
+day filters
+search filters
+fallback:
+if no filters → all locations
+Optional enhancement:
+sort list by distance after calculation
+🚀 PUSH 2 — Navigation + Logo + UX polish
+Add:
+1. “Open in Maps” link (in popup)
+https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}
+2. Logo placement
+right side of header
+flex container:
+left: title
+right: logo
+3. Improve selected state
+stronger background
+maybe slight scale or shadow
+4. Update placeholder
 
-Step 6
+You already flagged this:
 
-Do a final accessibility/mobile polish pass.
+"Search by name, city, meeting time..."
 
+🚀 PUSH 3 — Distance-aware UX refinement
+Add:
+1. Show distance in cards
+
+Example:
+
+2.3 km away
+2. Optional sorting toggle
+“Sort by distance”
+fallback to alphabetical
+3. Improve status messaging
+
+Example:
+
+Showing 12 locations (sorted by distance from you)
+5. Subtle but Important Improvement
+
+Right now:
+
+fitMapToRows(filteredRows);
+
+After “closest meeting”, you should:
+
+override this behavior
+zoom ONLY to selected location
+
+Otherwise:
+
+map will keep zooming out after filter changes
+6. Strategic Advice (what to focus on)
+
+You’re no longer in “build phase” — you’re in:
+
+interaction design + utility phase
+
+Your app is already:
+
+technically sound
+well-structured
+visually coherent
+
+The biggest gains now come from:
+
+decision support
+closest meeting
+time filtering (already strong)
+reducing friction
+one-click navigation
+clear selection
+confidence
+logo
+consistent UI
+Bottom Line
+
+You’ve already completed ~70–80% of your original roadmap.
+
+The remaining work is:
+
+not structural
+not architectural
+but interaction-focused

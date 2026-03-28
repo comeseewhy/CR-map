@@ -18,6 +18,9 @@
   --color-background: #f6f6f6;
   --color-soft: #fafafa;
   --color-soft-alt: #f3f4f6;
+  --color-primary: #2457a6;
+  --color-primary-hover: #1d4789;
+  --color-primary-soft: #eef4ff;
 }
 
 html,
@@ -217,12 +220,40 @@ a {
   background: rgba(123, 76, 226, 0.16);
 }
 
+.primary-button,
 .reset-button {
   padding: 10px 12px;
-  border: 1px solid #cccccc;
   border-radius: 8px;
-  background: #ffffff;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.primary-button {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.primary-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.primary-button:focus-visible,
+.reset-button:focus-visible {
+  outline: 2px solid #1f1f1f;
+  outline-offset: 2px;
+}
+
+.reset-button {
+  border: 1px solid #cccccc;
+  background: #ffffff;
 }
 
 .reset-button:hover {
@@ -271,7 +302,7 @@ a {
 
 .location-card.is-selected {
   border-color: #1f1f1f;
-  background: #eef4ff;
+  background: var(--color-primary-soft);
 }
 
 .location-card.day-monday {
