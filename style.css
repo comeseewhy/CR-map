@@ -24,6 +24,8 @@
   --color-primary-soft: #eef4ff;
   --color-shadow-soft: 0 6px 18px rgba(24, 39, 75, 0.08);
   --color-shadow-selected: 0 10px 24px rgba(36, 87, 166, 0.18);
+  --color-user-marker: #111111;
+  --color-user-marker-face: #ffd84d;
 }
 
 html,
@@ -92,6 +94,7 @@ a {
   color: #2457a6;
   text-decoration: none;
   word-break: break-word;
+  font-weight: 700;
 }
 
 .site-subtitle a:hover,
@@ -104,12 +107,12 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 72px;
+  min-width: 92px;
 }
 
 .site-logo {
   display: block;
-  max-height: 56px;
+  max-height: 72px;
   max-width: 100%;
   width: auto;
   height: auto;
@@ -531,6 +534,50 @@ a {
   background: #7f8c8d;
 }
 
+.user-marker {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-user-marker-face);
+  border: 3px solid var(--color-user-marker);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.user-marker::before,
+.user-marker::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  background: var(--color-user-marker);
+  border-radius: 50%;
+}
+
+.user-marker::before {
+  left: 7px;
+}
+
+.user-marker::after {
+  right: 7px;
+}
+
+.user-marker__mouth {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 12px;
+  height: 6px;
+  border-bottom: 3px solid var(--color-user-marker);
+  border-radius: 0 0 12px 12px;
+  transform: translateX(-50%);
+}
+
+.user-popup-label {
+  font-weight: 700;
+}
+
 @media (max-width: 768px) {
   html,
   body {
@@ -552,7 +599,7 @@ a {
   }
 
   .site-logo {
-    max-height: 46px;
+    max-height: 58px;
   }
 
   .main-layout {

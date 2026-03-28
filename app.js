@@ -7,43 +7,50 @@ const DAY_CONFIG = {
     shortLabel: 'Mon',
     cardClass: 'day-monday',
     badgeClass: 'day-badge--monday',
-    markerClass: 'cr-marker--monday'
+    markerClass: 'cr-marker--monday',
+    color: '#2e8b57'
   },
   Tuesday: {
     shortLabel: 'Tue',
     cardClass: 'day-tuesday',
     badgeClass: 'day-badge--tuesday',
-    markerClass: 'cr-marker--tuesday'
+    markerClass: 'cr-marker--tuesday',
+    color: '#d4af37'
   },
   Wednesday: {
     shortLabel: 'Wed',
     cardClass: 'day-wednesday',
     badgeClass: 'day-badge--wednesday',
-    markerClass: 'cr-marker--wednesday'
+    markerClass: 'cr-marker--wednesday',
+    color: '#c0392b'
   },
   Thursday: {
     shortLabel: 'Thu',
     cardClass: 'day-thursday',
     badgeClass: 'day-badge--thursday',
-    markerClass: 'cr-marker--thursday'
+    markerClass: 'cr-marker--thursday',
+    color: '#e67e22'
   },
   Friday: {
     shortLabel: 'Fri',
     cardClass: 'day-friday',
     badgeClass: 'day-badge--friday',
-    markerClass: 'cr-marker--friday'
+    markerClass: 'cr-marker--friday',
+    color: '#2f6fed'
   },
   Saturday: {
     shortLabel: 'Sat',
     cardClass: 'day-saturday',
     badgeClass: 'day-badge--saturday',
-    markerClass: 'cr-marker--saturday'
+    markerClass: 'cr-marker--saturday',
+    color: '#ff5fa2'
   },
   Sunday: {
     shortLabel: 'Sun',
     cardClass: 'day-sunday',
     badgeClass: 'day-badge--sunday',
-    markerClass: 'cr-marker--sunday'
+    markerClass: 'cr-marker--sunday',
+    color: '#7b4ce2'
   }
 };
 
@@ -68,12 +75,15 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const markersLayer = L.layerGroup().addTo(map);
+const routeLayer = L.layerGroup().addTo(map);
 
 let allRows = [];
 let filteredRows = [];
 let selectedOrgId = null;
 let isLocatingUser = false;
 let shouldAutoFitMap = true;
+let closestSession = null;
+let isDistanceSorted = false;
 
 const markerByOrgId = new Map();
 const activeDays = new Set();
@@ -109,6 +119,11 @@ function normalizeDay(dayValue) {
 
 function getDayConfig(day) {
   return DAY_CONFIG[normalizeDay(day)] || null;
+}
+
+function getDayColor(day) {
+  const dayConfig = getDayConfig(day);
+  return dayConfig ? dayConfig.color : '#7f8c8d';
 }
 
 function normalizeMeetingTimeForSearch(value) {
@@ -224,6 +239,20 @@ function getCurrentPosition() {
 function buildGoogleMapsUrl(row) {
   const destination = `${row.lat},${row.lng}`;
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+}
+
+function buildUserMarkerIcon() {
+  return L.divIcon({
+    className: '',
+    html: `
+      <div class="user-marker" aria-hidden="true">
+        <span class="user-marker__mouth"></span>
+      </div>
+    `,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -14]
+  });
 }
 
 function setClosestButtonLoading(isLoading) {
@@ -416,6 +445,21 @@ function fitMapToRows(rows) {
   }
 }
 
+function fitMapToClosestSession() {
+  if (!closestSession) {
+    return;
+  }
+
+  const bounds = L.latLngBounds([
+    [closestSession.userLat, closestSession.userLng],
+    [closestSession.closestRow.lat, closestSession.closestRow.lng]
+  ]);
+
+  map.fitBounds(bounds, {
+    padding: [40, 40]
+  });
+}
+
 function renderMarkers(rows) {
   markersLayer.clearLayers();
   markerByOrgId.clear();
@@ -436,6 +480,44 @@ function renderMarkers(rows) {
   });
 }
 
+function renderClosestSessionVisuals() {
+  routeLayer.clearLayers();
+
+  if (!closestSession) {
+    return;
+  }
+
+  const {
+    userLat,
+    userLng,
+    closestRow
+  } = closestSession;
+
+  const routeColor = getDayColor(closestRow.meeting_day);
+
+  const userMarker = L.marker([userLat, userLng], {
+    icon: buildUserMarkerIcon()
+  }).bindPopup('<div class="user-popup-label">Your location</div>');
+
+  const line = L.polyline(
+    [
+      [userLat, userLng],
+      [closestRow.lat, closestRow.lng]
+    ],
+    {
+      color: routeColor,
+      weight: 4,
+      opacity: 0.9,
+      dashArray: '10 8',
+      lineCap: 'round',
+      lineJoin: 'round'
+    }
+  );
+
+  line.addTo(routeLayer);
+  userMarker.addTo(routeLayer);
+}
+
 function updateStatus(rows) {
   const total = allRows.length;
   const shown = rows.length;
@@ -443,6 +525,12 @@ function updateStatus(rows) {
 
   if (total === 0) {
     statusEl.textContent = 'No locations available.';
+    return;
+  }
+
+  if (closestSession && closestSession.closestRow) {
+    const closestRow = closestSession.closestRow;
+    statusEl.textContent = `Closest displayed meeting: ${closestRow.name} (${formatDistanceKm(closestRow.distanceKm)}), sorted by distance.`;
     return;
   }
 
@@ -466,6 +554,13 @@ function clearDistanceData() {
   });
 }
 
+function clearClosestSession() {
+  closestSession = null;
+  isDistanceSorted = false;
+  routeLayer.clearLayers();
+  clearDistanceData();
+}
+
 function scrollSelectedCardIntoView() {
   if (!selectedOrgId) {
     return;
@@ -485,6 +580,31 @@ function scrollSelectedCardIntoView() {
   });
 }
 
+function sortRowsForDisplay(rows) {
+  if (!isDistanceSorted) {
+    return rows;
+  }
+
+  return [...rows].sort((a, b) => {
+    const aHasDistance = Number.isFinite(a.distanceKm);
+    const bHasDistance = Number.isFinite(b.distanceKm);
+
+    if (aHasDistance && bHasDistance) {
+      return a.distanceKm - b.distanceKm;
+    }
+
+    if (aHasDistance) {
+      return -1;
+    }
+
+    if (bHasDistance) {
+      return 1;
+    }
+
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+}
+
 function applyFilters() {
   const searchTerm = normalizeSearchTerm(searchInputEl.value);
 
@@ -497,14 +617,22 @@ function applyFilters() {
     return matchesSearch && matchesDay;
   });
 
+  filteredRows = sortRowsForDisplay(filteredRows);
+
   if (selectedOrgId && !filteredRows.some((row) => String(row.org_id) === String(selectedOrgId))) {
     selectedOrgId = null;
   }
 
   renderDayToggles();
   renderMarkers(filteredRows);
+  renderClosestSessionVisuals();
   renderLocationList(filteredRows);
   updateStatus(filteredRows);
+
+  if (closestSession && selectedOrgId === String(closestSession.closestRow.org_id)) {
+    fitMapToClosestSession();
+    return;
+  }
 
   if (shouldAutoFitMap) {
     fitMapToRows(filteredRows);
@@ -552,7 +680,7 @@ function toggleDay(day) {
 
   shouldAutoFitMap = true;
   selectedOrgId = null;
-  clearDistanceData();
+  clearClosestSession();
 
   if (activeDays.has(day)) {
     activeDays.delete(day);
@@ -568,7 +696,7 @@ function resetFilters() {
   selectedOrgId = null;
   shouldAutoFitMap = true;
   activeDays.clear();
-  clearDistanceData();
+  clearClosestSession();
   applyFilters();
 }
 
@@ -607,15 +735,33 @@ async function findClosestMeeting() {
       return;
     }
 
+    closestSession = {
+      userLat,
+      userLng,
+      closestRow
+    };
+
+    isDistanceSorted = true;
     selectedOrgId = closestRow.org_id;
     shouldAutoFitMap = false;
 
-    renderMarkers(filteredRows);
-    renderLocationList(filteredRows);
-    focusLocation(closestRow.org_id);
+    filteredRows = sortRowsForDisplay(filteredRows);
 
-    statusEl.textContent = `Closest displayed meeting: ${closestRow.name} (${formatDistanceKm(closestRow.distanceKm)}).`;
+    renderMarkers(filteredRows);
+    renderClosestSessionVisuals();
+    renderLocationList(filteredRows);
+    updateStatus(filteredRows);
+
+    const marker = markerByOrgId.get(String(closestRow.org_id));
+    if (marker) {
+      marker.openPopup();
+    }
+
+    scrollSelectedCardIntoView();
+    fitMapToClosestSession();
   } catch (error) {
+    clearClosestSession();
+
     if (error && typeof error.code === 'number') {
       switch (error.code) {
         case 1:
@@ -683,7 +829,7 @@ async function loadLocations() {
 searchInputEl.addEventListener('input', () => {
   shouldAutoFitMap = true;
   selectedOrgId = null;
-  clearDistanceData();
+  clearClosestSession();
   applyFilters();
 });
 
