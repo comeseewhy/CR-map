@@ -16,6 +16,12 @@ body {
   min-height: 100vh;
 }
 
+button,
+input,
+select {
+  font: inherit;
+}
+
 #app {
   min-height: 100vh;
   display: flex;
@@ -64,6 +70,53 @@ body {
   line-height: 1.5;
 }
 
+.filters {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fafafa;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+}
+
+.filter-group {
+  display: grid;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 0.9rem;
+  color: #444444;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.reset-button {
+  padding: 10px 12px;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.reset-button:hover {
+  background: #f3f4f6;
+}
+
 .status {
   margin: 0 0 16px;
   padding: 10px 12px;
@@ -79,10 +132,28 @@ body {
 }
 
 .location-card {
+  width: 100%;
   padding: 12px;
   border: 1px solid #dddddd;
   border-radius: 10px;
   background: #fafafa;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.location-card:hover {
+  background: #f3f4f6;
+}
+
+.location-card:focus-visible {
+  outline: 2px solid #1f1f1f;
+  outline-offset: 2px;
+}
+
+.location-card.is-selected {
+  border-color: #1f1f1f;
+  background: #eef4ff;
 }
 
 .location-card h3 {
@@ -94,6 +165,14 @@ body {
   margin: 4px 0;
   line-height: 1.4;
   font-size: 0.95rem;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  background: #fafafa;
 }
 
 .map-panel {

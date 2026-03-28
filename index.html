@@ -25,8 +25,44 @@
       <section class="sidebar" aria-label="Location details">
         <h2>Locations</h2>
         <p class="sidebar-intro">
-          This prototype loads Celebrate Recovery locations from Supabase and displays them on the map.
+          Find Celebrate Recovery locations across Ontario.
         </p>
+
+        <div class="filters" aria-label="Filters">
+          <label class="filter-group" for="search-input">
+            <span class="filter-label">Search</span>
+            <input
+              id="search-input"
+              class="filter-input"
+              type="search"
+              placeholder="Search by name, city, address..."
+              autocomplete="off"
+            />
+          </label>
+
+          <label class="filter-group" for="day-filter">
+            <span class="filter-label">Day</span>
+            <select id="day-filter" class="filter-input">
+              <option value="">All days</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+              <option value="Sunday">Sunday</option>
+            </select>
+          </label>
+
+          <label class="checkbox-row" for="hybrid-only">
+            <input id="hybrid-only" type="checkbox" />
+            <span>Hybrid only</span>
+          </label>
+
+          <button id="reset-filters" class="reset-button" type="button">
+            Reset filters
+          </button>
+        </div>
 
         <p id="status" class="status" aria-live="polite">Starting…</p>
 
