@@ -261,50 +261,46 @@ function setClosestButtonLoading(isLoading) {
   closestMeetingEl.textContent = isLoading ? 'Finding closest meeting…' : 'Find closest meeting';
 }
 
+function getPopupOffsetPixels() {
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+  if (isMobile) {
+    return { x: 0, y: 120 };
+  }
+
+  return { x: -120, y: 110 };
+}
+
 function buildPopupHtml(row) {
   const name = escapeHtml(row.name || 'Unnamed location');
   const address = escapeHtml(row.address || 'Address unavailable');
-  const city = escapeHtml(row.city || '');
-  const province = escapeHtml(row.province || '');
   const meetingLine = escapeHtml(formatMeetingLine(row));
   const notes = row.notes ? escapeHtml(row.notes) : '';
   const website = row.website ? String(row.website).trim() : '';
   const mapsUrl = buildGoogleMapsUrl(row);
-  const dayConfig = getDayConfig(row.meeting_day);
-  const badgeHtml = dayConfig
-    ? `<span class="day-badge ${dayConfig.badgeClass}">${escapeHtml(dayConfig.shortLabel)}</span>`
+  const routeColor = getDayColor(row.meeting_day);
+
+  const distanceHtml = Number.isFinite(row.distanceKm)
+    ? `<p class="popup-distance">${escapeHtml(formatDistanceKm(row.distanceKm))}</p>`
     : '';
 
-  const cityProvinceLine = [city, province].filter(Boolean).join(', ');
-  const distanceHtml = Number.isFinite(row.distanceKm)
-    ? `<p class="popup-line"><strong>${escapeHtml(formatDistanceKm(row.distanceKm))}</strong></p>`
+  const notesHtml = notes
+    ? `<p class="popup-notes">${notes}</p>`
     : '';
 
   const websiteHtml = website
-    ? `<a class="popup-action-link" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
-    : '';
-
-  const mapsHtml = `
-    <a class="popup-action-link" href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer">
-      Open in Google Maps
-    </a>
-  `;
-
-  const notesHtml = notes
-    ? `<p class="popup-line">${notes}</p>`
+    ? `<a class="popup-btn" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Visit Website</a>`
     : '';
 
   return `
-    <div class="popup-content">
-      <strong>${name}</strong>
-      <p class="popup-line">${address}</p>
-      <p class="popup-line">${cityProvinceLine || 'Location details unavailable'}</p>
-      <p class="popup-line">${meetingLine}</p>
+    <div class="popup-card" style="border-left-color: ${escapeHtml(routeColor)};">
+      <p class="popup-title">${name}</p>
+      <p class="popup-address">${address}</p>
+      <p class="popup-meeting">${meetingLine}</p>
       ${distanceHtml}
-      ${badgeHtml}
       ${notesHtml}
       <div class="popup-actions">
-        ${mapsHtml}
+        <a class="popup-btn" href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer">Map</a>
         ${websiteHtml}
       </div>
     </div>
@@ -446,7 +442,7 @@ function fitMapToRows(rows) {
 }
 
 function fitMapToClosestSession() {
-  if (!closestSession) {
+  if (!closestSession || !closestSession.closestRow) {
     return;
   }
 
@@ -467,12 +463,18 @@ function renderMarkers(rows) {
   rows.forEach((row) => {
     const marker = L.marker([row.lat, row.lng], {
       icon: buildMarkerIcon(row)
-    }).bindPopup(buildPopupHtml(row));
+    }).bindPopup(buildPopupHtml(row), {
+      autoPan: true,
+      keepInView: true,
+      maxWidth: 300,
+      minWidth: 220
+    });
 
     marker.on('click', () => {
-      selectedOrgId = row.org_id;
-      renderLocationList(filteredRows);
-      scrollSelectedCardIntoView();
+      focusLocation(row.org_id, {
+        openPopup: true,
+        keepCurrentZoom: true
+      });
     });
 
     marker.addTo(markersLayer);
@@ -483,16 +485,11 @@ function renderMarkers(rows) {
 function renderClosestSessionVisuals() {
   routeLayer.clearLayers();
 
-  if (!closestSession) {
+  if (!closestSession || !closestSession.closestRow) {
     return;
   }
 
-  const {
-    userLat,
-    userLng,
-    closestRow
-  } = closestSession;
-
+  const { userLat, userLng, closestRow } = closestSession;
   const routeColor = getDayColor(closestRow.meeting_day);
 
   const userMarker = L.marker([userLat, userLng], {
@@ -508,7 +505,7 @@ function renderClosestSessionVisuals() {
       color: routeColor,
       weight: 4,
       opacity: 0.9,
-      dashArray: '10 8',
+      dashArray: '8 6',
       lineCap: 'round',
       lineJoin: 'round'
     }
@@ -530,7 +527,10 @@ function updateStatus(rows) {
 
   if (closestSession && closestSession.closestRow) {
     const closestRow = closestSession.closestRow;
-    statusEl.textContent = `Closest displayed meeting: ${closestRow.name} (${formatDistanceKm(closestRow.distanceKm)}), sorted by distance.`;
+    const distanceText = Number.isFinite(closestRow.distanceKm)
+      ? formatDistanceKm(closestRow.distanceKm)
+      : 'distance available';
+    statusEl.textContent = `Closest displayed meeting: ${closestRow.name} (${distanceText}), sorted by distance.`;
     return;
   }
 
@@ -610,7 +610,9 @@ function applyFilters() {
 
   filteredRows = allRows.filter((row) => {
     const searchText = buildSearchText(row);
-    const matchesSearch = !searchTerm || searchTerm.split(' ').every((token) => !token || searchText.includes(token));
+    const matchesSearch = !searchTerm || searchTerm
+      .split(' ')
+      .every((token) => !token || searchText.includes(token));
     const normalizedDay = normalizeDay(row.meeting_day);
     const matchesDay = activeDays.size === 0 || activeDays.has(normalizedDay);
 
@@ -623,13 +625,22 @@ function applyFilters() {
     selectedOrgId = null;
   }
 
+  if (
+    closestSession &&
+    closestSession.closestRow &&
+    !filteredRows.some((row) => String(row.org_id) === String(closestSession.closestRow.org_id))
+  ) {
+    clearClosestSession();
+    filteredRows = sortRowsForDisplay(filteredRows);
+  }
+
   renderDayToggles();
   renderMarkers(filteredRows);
   renderClosestSessionVisuals();
   renderLocationList(filteredRows);
   updateStatus(filteredRows);
 
-  if (closestSession && selectedOrgId === String(closestSession.closestRow.org_id)) {
+  if (closestSession && closestSession.closestRow && selectedOrgId === String(closestSession.closestRow.org_id)) {
     fitMapToClosestSession();
     return;
   }
@@ -641,7 +652,12 @@ function applyFilters() {
 
     if (marker) {
       const latLng = marker.getLatLng();
-      map.setView(latLng, Math.max(map.getZoom(), FOCUSED_ZOOM), { animate: false });
+      const nextZoom = Math.max(map.getZoom(), FOCUSED_ZOOM);
+      const offset = getPopupOffsetPixels();
+      const point = map.project(latLng, nextZoom).subtract([offset.x, offset.y]);
+      const targetLatLng = map.unproject(point, nextZoom);
+
+      map.setView(targetLatLng, nextZoom, { animate: false });
     }
   }
 }
@@ -653,23 +669,39 @@ function focusLocation(orgId, options = {}) {
   } = options;
 
   const marker = markerByOrgId.get(String(orgId));
-
   if (!marker) {
+    return;
+  }
+
+  const selectedRow = filteredRows.find((row) => String(row.org_id) === String(orgId));
+  if (!selectedRow) {
     return;
   }
 
   selectedOrgId = orgId;
   shouldAutoFitMap = false;
+
+  if (closestSession && closestSession.userLat) {
+    closestSession.closestRow = selectedRow;
+    renderClosestSessionVisuals();
+    updateStatus(filteredRows);
+  }
+
   renderLocationList(filteredRows);
   scrollSelectedCardIntoView();
 
   const latLng = marker.getLatLng();
   const nextZoom = keepCurrentZoom ? map.getZoom() : Math.max(map.getZoom(), FOCUSED_ZOOM);
+  const offset = getPopupOffsetPixels();
+  const point = map.project(latLng, nextZoom).subtract([offset.x, offset.y]);
+  const targetLatLng = map.unproject(point, nextZoom);
 
-  map.setView(latLng, nextZoom, { animate: true });
+  map.setView(targetLatLng, nextZoom, { animate: true });
 
   if (openPopup) {
-    marker.openPopup();
+    window.setTimeout(() => {
+      marker.openPopup();
+    }, 150);
   }
 }
 
@@ -751,14 +783,15 @@ async function findClosestMeeting() {
     renderClosestSessionVisuals();
     renderLocationList(filteredRows);
     updateStatus(filteredRows);
+    scrollSelectedCardIntoView();
+    fitMapToClosestSession();
 
     const marker = markerByOrgId.get(String(closestRow.org_id));
     if (marker) {
-      marker.openPopup();
+      window.setTimeout(() => {
+        marker.openPopup();
+      }, 150);
     }
-
-    scrollSelectedCardIntoView();
-    fitMapToClosestSession();
   } catch (error) {
     clearClosestSession();
 

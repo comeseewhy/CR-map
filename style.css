@@ -26,6 +26,7 @@
   --color-shadow-selected: 0 10px 24px rgba(36, 87, 166, 0.18);
   --color-user-marker: #111111;
   --color-user-marker-face: #ffd84d;
+  --popup-max-width: 280px;
 }
 
 html,
@@ -107,12 +108,12 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 92px;
+  min-width: 96px;
 }
 
 .site-logo {
   display: block;
-  max-height: 72px;
+  max-height: 76px;
   max-width: 100%;
   width: auto;
   height: auto;
@@ -417,41 +418,92 @@ a {
   height: 100%;
 }
 
+.leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(24, 39, 75, 0.18);
+}
+
 .leaflet-popup-content {
-  line-height: 1.45;
+  margin: 0;
+  line-height: 1.4;
+  width: auto !important;
+  min-width: 0 !important;
 }
 
-.popup-content {
+.leaflet-popup-tip {
+  box-shadow: none;
+}
+
+.popup-card {
   min-width: 220px;
+  max-width: var(--popup-max-width);
+  padding: 12px 12px 12px 14px;
+  background: var(--color-soft);
+  border-left: 6px solid transparent;
+  border-radius: 12px;
 }
 
-.popup-line {
-  margin: 6px 0;
+.popup-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.popup-address {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  line-height: 1.35;
+}
+
+.popup-meeting {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.popup-distance {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.popup-notes {
+  margin: 0 0 8px;
+  font-size: 0.86rem;
+  color: var(--color-muted);
+  line-height: 1.35;
 }
 
 .popup-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
-.popup-action-link {
+.popup-btn {
   display: inline-flex;
+  flex: 1 1 0;
   align-items: center;
   justify-content: center;
-  padding: 8px 10px;
+  min-height: 34px;
+  padding: 7px 10px;
   border: 1px solid var(--color-primary);
   border-radius: 8px;
   background: #ffffff;
   color: var(--color-primary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
-.popup-action-link:hover,
-.popup-action-link:focus-visible {
+.popup-btn:hover,
+.popup-btn:focus-visible {
   background: var(--color-primary-soft);
 }
 
@@ -599,7 +651,7 @@ a {
   }
 
   .site-logo {
-    max-height: 58px;
+    max-height: 62px;
   }
 
   .main-layout {
@@ -622,5 +674,9 @@ a {
   #map {
     height: 60vh;
     min-height: 420px;
+  }
+
+  .popup-card {
+    max-width: 240px;
   }
 }
