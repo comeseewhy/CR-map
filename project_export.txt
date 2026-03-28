@@ -1,0 +1,363 @@
+===== index.html =====
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Celebrate Recovery Map</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="site-header">
+      <h1>Celebrate Recovery Map</h1>
+      <p class="site-subtitle">Ontario locations</p>
+    </header>
+
+    <main class="main-layout">
+      <section class="sidebar" aria-label="Location details">
+        <h2>Locations</h2>
+        <p class="sidebar-intro">
+          This prototype loads Celebrate Recovery locations from Supabase and displays them on the map.
+        </p>
+
+        <p id="status" class="status" aria-live="polite">Starting…</p>
+
+        <div id="location-list" class="location-list" aria-live="polite"></div>
+      </section>
+
+      <section class="map-panel">
+        <div id="map" aria-label="Map of Celebrate Recovery locations"></div>
+      </section>
+    </main>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
+===== style.css =====
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: Arial, sans-serif;
+  background: #f6f6f6;
+  color: #1f1f1f;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-header {
+  padding: 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #dddddd;
+}
+
+.site-header h1 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+}
+
+.site-subtitle {
+  margin: 0;
+  color: #666666;
+  font-size: 0.95rem;
+}
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar {
+  padding: 16px;
+  background: #ffffff;
+  border-right: 1px solid #dddddd;
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.sidebar-intro {
+  margin-top: 0;
+  line-height: 1.5;
+}
+
+.status {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: #f3f4f6;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.location-list {
+  display: grid;
+  gap: 12px;
+}
+
+.location-card {
+  padding: 12px;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.location-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.location-card p {
+  margin: 4px 0;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.map-panel {
+  min-height: 0;
+}
+
+#map {
+  width: 100%;
+  height: calc(100vh - 77px);
+}
+
+.leaflet-popup-content {
+  line-height: 1.45;
+}
+
+.popup-content {
+  min-width: 200px;
+}
+
+.popup-line {
+  margin: 6px 0;
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid #dddddd;
+  }
+
+  #map {
+    height: 60vh;
+    min-height: 420px;
+  }
+}
+
+===== app.js =====
+const ONTARIO_CENTER = [43.7, -79.4];
+const INITIAL_ZOOM = 6;
+
+const { createClient } = supabase;
+
+const statusEl = document.getElementById('status');
+const locationListEl = document.getElementById('location-list');
+
+const map = L.map('map').setView(ONTARIO_CENTER, INITIAL_ZOOM);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 19
+}).addTo(map);
+
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const markersLayer = L.layerGroup().addTo(map);
+
+function formatMeetingLine(row) {
+  if (row.meeting_day && row.meeting_time) {
+    return `${row.meeting_day} at ${row.meeting_time}`;
+  }
+
+  if (row.meeting_day) {
+    return row.meeting_day;
+  }
+
+  if (row.meeting_time) {
+    return row.meeting_time;
+  }
+
+  return 'Meeting time not listed';
+}
+
+function buildPopupHtml(row) {
+  const websiteHtml = row.website
+    ? `<p class="popup-line"><a href="${row.website}" target="_blank" rel="noopener noreferrer">Visit website</a></p>`
+    : '';
+
+  const notesHtml = row.notes
+    ? `<p class="popup-line">${row.notes}</p>`
+    : '';
+
+  const hybridHtml = row.is_hybrid
+    ? '<p class="popup-line">Hybrid option available</p>'
+    : '';
+
+  return `
+    <div class="popup-content">
+      <strong>${row.name || 'Unnamed location'}</strong>
+      <p class="popup-line">${row.address || 'Address unavailable'}</p>
+      <p class="popup-line">${row.city || ''}${row.city && row.province ? ', ' : ''}${row.province || ''}</p>
+      <p class="popup-line">${formatMeetingLine(row)}</p>
+      ${hybridHtml}
+      ${notesHtml}
+      ${websiteHtml}
+    </div>
+  `;
+}
+
+function renderLocationList(rows) {
+  if (!rows.length) {
+    locationListEl.innerHTML = '<p>No locations found.</p>';
+    return;
+  }
+
+  locationListEl.innerHTML = rows.map((row) => `
+    <article class="location-card">
+      <h3>${row.name || 'Unnamed location'}</h3>
+      <p>${row.address || 'Address unavailable'}</p>
+      <p>${row.city || ''}${row.city && row.province ? ', ' : ''}${row.province || ''}</p>
+      <p>${formatMeetingLine(row)}</p>
+    </article>
+  `).join('');
+}
+
+function normalizeRows(data) {
+  return data
+    .filter((item) => item.locations)
+    .map((item) => ({
+      org_id: item.org_id,
+      name: item.name,
+      website: item.website,
+      org_type: item.org_type,
+      meeting_day: item.meeting_day,
+      meeting_time: item.meeting_time,
+      is_hybrid: item.is_hybrid,
+      online_day: item.online_day,
+      online_time: item.online_time,
+      notes: item.notes,
+      loc_id: item.locations.loc_id,
+      address: item.locations.address,
+      city: item.locations.city,
+      province: item.locations.province,
+      postal_code: item.locations.postal_code,
+      lat: Number(item.locations.lat),
+      lng: Number(item.locations.lng)
+    }))
+    .filter((row) => Number.isFinite(row.lat) && Number.isFinite(row.lng));
+}
+
+function renderMarkers(rows) {
+  markersLayer.clearLayers();
+
+  const bounds = [];
+
+  rows.forEach((row) => {
+    const marker = L.marker([row.lat, row.lng])
+      .bindPopup(buildPopupHtml(row));
+
+    marker.addTo(markersLayer);
+    bounds.push([row.lat, row.lng]);
+  });
+
+  if (bounds.length === 1) {
+    map.setView(bounds[0], 11);
+    return;
+  }
+
+  if (bounds.length > 1) {
+    map.fitBounds(bounds, {
+      padding: [30, 30]
+    });
+  }
+}
+
+async function loadLocations() {
+  statusEl.textContent = 'Loading locations…';
+
+  const { data, error } = await supabaseClient
+    .from('organizations')
+    .select(`
+      org_id,
+      name,
+      website,
+      org_type,
+      meeting_day,
+      meeting_time,
+      is_hybrid,
+      online_day,
+      online_time,
+      notes,
+      locations (
+        loc_id,
+        address,
+        city,
+        province,
+        postal_code,
+        lat,
+        lng
+      )
+    `)
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Error loading locations:', error);
+    statusEl.textContent = 'Could not load locations.';
+    locationListEl.innerHTML = '<p>Check the browser console for details.</p>';
+    return;
+  }
+
+  const rows = normalizeRows(data);
+
+  renderMarkers(rows);
+  renderLocationList(rows);
+  statusEl.textContent = `${rows.length} location${rows.length === 1 ? '' : 's'} loaded.`;
+}
+
+loadLocations();
+
+
+Generated: 03/28/2026 14:07:50
