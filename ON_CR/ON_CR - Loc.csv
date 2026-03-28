@@ -1,0 +1,26 @@
+loc_id,address,street_name_number,city,province,postal_code,lat,lng
+LOC_CA_ON_001,"60 Kearney Dr, Ajax, Ontario, L1T 4N2",60 Kearney Dr,Ajax,Ontario,L1T 4N2,43.856221,-79.0638859
+LOC_CA_ON_002,"535 Dundas St East, Belleville, Ontario, K8N 5P6",535 Dundas St East,Belleville,Ontario,K8N 5P6,44.1675605,-77.3477268
+LOC_CA_ON_003,"69 Superior Street, Brantford, Ontario, N3S 2K5",69 Superior Street,Brantford,Ontario,N3S 2K5,43.1303022,-80.2550964
+LOC_CA_ON_004,"632 Lacroix Street, Chatham, Ontario, N7M2Y6",632 Lacroix Street,Chatham,Ontario,N7M 2Y6,42.3837458,-82.1717854
+LOC_CA_ON_005,"1548 Kipling Avenue, Etobicoke, Ontario, M9R4A3",1548 Kipling Avenue,Etobicoke,Ontario,M9R 4A3,43.6809607,-79.5532216
+LOC_CA_ON_006,"132 Lake Street, Grimsby, Ontario, L3M4M7",132 Lake Street,Grimsby,Ontario,L3M 4M7,43.1963345,-79.5406674
+LOC_CA_ON_007,"10 Cork St E, Guelph, Ontario, N1H 2W8",10 Cork St E,Guelph,Ontario,N1H 2W8,43.5447959,-80.2506455
+LOC_CA_ON_008,"7654 Conservation Rd, Guelph, Ontario, N1H 6J1",7654 Conservation Rd,Guelph,Ontario,N1H 6J1,43.5943793,-80.2742634
+LOC_CA_ON_009,"816 Centennial Dr, Kingston, Ontario, K7M0A4",816 Centennial Dr,Kingston,Ontario,K7M 0A4,44.249068,-76.5540431
+LOC_CA_ON_010,"475 Bevel Line, Leamington, Ontario, N8H3V4",475 Bevel Line,Leamington,Ontario,N8H 3V4,42.0285705,-82.5823553
+LOC_CA_ON_011,"640 Grosvenor St, London, Ontario, N5Y 3T4",640 Grosvenor St,London,Ontario,N5Y 3T4,43.0048995,-81.2374118
+LOC_CA_ON_012,"1250 Cassells St, North Bay, Ontario, P1B 4B7",1250 Cassells St,North Bay,Ontario,P1B 4B7,46.3184283,-79.4538206
+LOC_CA_ON_013,"301 Rossland Road East, Oshawa, Ontario, L1G-2X1",301 Rossland Road East,Oshawa,Ontario,L1G 2X1,43.9170824,-78.860691
+LOC_CA_ON_014,"470 Ritson Road S, Oshawa, Ontario, L1H 5J9",470 Ritson Road S,Oshawa,Ontario,L1H 5J9,43.8874553,-78.84866
+LOC_CA_ON_015,"20 Cedar St, Paris, Ontario, N3L 0A1",20 Cedar St,Paris,Ontario,N3L 0A1,43.1846068,-80.3893145
+LOC_CA_ON_016,"240 Main Street, Bloomfield, Ontario, K0K 2T0",240 Main Street,Bloomfield,Ontario,K0K 2T0,43.9887358,-77.2267739
+LOC_CA_ON_017,"1750 Stouffville Rd, Richmond Hill, Ontario, L4E 0K3",1750 Stouffville Rd,Richmond Hill,Ontario,L4E 0K3,43.9412623,-79.3946594
+LOC_CA_ON_018,"1388 Third St, St. Catharines, Ontario, L2R-6P9",1388 Third St,St. Catharines,Ontario,L2R 6P9,43.1700632,-79.3071196
+LOC_CA_ON_019,"668 Talbot St, St. Thomas, Ontario, N5P 1C8",668 Talbot St,St. Thomas,Ontario,N5P 1C8,42.7786786,-81.1891606
+LOC_CA_ON_020,"4192 Perth Line 36, Stratford, Ontario, N5A 6S6",4192 Perth Line 36,Stratford,Ontario,N5A 6S6,43.3966662,-80.9901419
+LOC_CA_ON_021,"6 North Street E, Tillsonburg, Ontario, N4G 1B2",6 North Street E,Tillsonburg,Ontario,N4G 1B2,42.8791842,-80.7459524
+LOC_CA_ON_022,"45 Davenport Road, Toronto, Ontario, M5R 1H2",45 Davenport Road,Toronto,Ontario,M5R 1H2,43.6727365,-79.3897137
+LOC_CA_ON_023,"660 Conservation Dr., Waterloo, Ontario, N2J 3Z4",660 Conservation Dr.,Waterloo,Ontario,N2J 3Z4,43.4857184,-80.602349
+LOC_CA_ON_024,"305 Rice Road, Welland, Ontario, L3C 2V9",305 Rice Road,Welland,Ontario,L3C 2V9,43.0172229,-79.2712148
+LOC_CA_ON_025,"65 Landsdowne Ave., Woodstock, Ontario, N4T 1S8",65 Landsdowne Ave.,Woodstock,Ontario,N4T 1S8,43.1371078,-80.7233548
