@@ -108,6 +108,38 @@ select {
   background: #ffffff;
 }
 
+.day-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.day-toggle {
+  min-width: 52px;
+  padding: 8px 10px;
+  border: 1px solid #cccccc;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f1f1f;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.day-toggle:hover {
+  background: #f3f4f6;
+}
+
+.day-toggle.is-active {
+  background: #1f1f1f;
+  border-color: #1f1f1f;
+  color: #ffffff;
+}
+
+.day-toggle:focus-visible {
+  outline: 2px solid #1f1f1f;
+  outline-offset: 2px;
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;

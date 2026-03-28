@@ -1,14 +1,24 @@
 const ONTARIO_CENTER = [43.7, -79.4];
 const INITIAL_ZOOM = 6;
+const DAYS_OF_WEEK = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday'
+];
 
 const { createClient } = supabase;
 
 const statusEl = document.getElementById('status');
 const locationListEl = document.getElementById('location-list');
 const searchInputEl = document.getElementById('search-input');
-const dayFilterEl = document.getElementById('day-filter');
 const hybridOnlyEl = document.getElementById('hybrid-only');
 const resetFiltersEl = document.getElementById('reset-filters');
+const dayToggleGroupEl = document.getElementById('day-toggle-group');
+const dayToggleEls = Array.from(document.querySelectorAll('.day-toggle'));
 
 const map = L.map('map').setView(ONTARIO_CENTER, INITIAL_ZOOM);
 
@@ -24,6 +34,7 @@ let allRows = [];
 let filteredRows = [];
 let selectedOrgId = null;
 const markerByOrgId = new Map();
+const activeDays = new Set();
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -149,6 +160,16 @@ function normalizeRows(data) {
     .filter((row) => Number.isFinite(row.lat) && Number.isFinite(row.lng));
 }
 
+function renderDayToggles() {
+  dayToggleEls.forEach((button) => {
+    const day = button.dataset.day;
+    const isActive = activeDays.has(day);
+
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
 function renderLocationList(rows) {
   if (!rows.length) {
     locationListEl.innerHTML = '<p class="empty-state">No locations match the current filters.</p>';
@@ -218,37 +239,42 @@ function renderMarkers(rows) {
 function updateStatus(rows) {
   const total = allRows.length;
   const shown = rows.length;
+  const activeDayCount = activeDays.size;
 
   if (total === 0) {
     statusEl.textContent = 'No locations available.';
     return;
   }
 
-  if (shown === total) {
+  if (shown === total && activeDayCount === 0 && !hybridOnlyEl.checked && !searchInputEl.value.trim()) {
     statusEl.textContent = `${shown} location${shown === 1 ? '' : 's'} loaded.`;
     return;
   }
 
-  statusEl.textContent = `Showing ${shown} of ${total} location${total === 1 ? '' : 's'}.`;
+  const dayText = activeDayCount === 0
+    ? 'all days'
+    : `${activeDayCount} day${activeDayCount === 1 ? '' : 's'} selected`;
+
+  statusEl.textContent = `Showing ${shown} of ${total} location${total === 1 ? '' : 's'} (${dayText}).`;
 }
 
 function applyFilters() {
   const searchTerm = searchInputEl.value.trim().toLowerCase();
-  const selectedDay = dayFilterEl.value;
   const hybridOnly = hybridOnlyEl.checked;
 
   filteredRows = allRows.filter((row) => {
     const matchesSearch = !searchTerm || buildSearchText(row).includes(searchTerm);
-    const matchesDay = !selectedDay || normalizeDay(row.meeting_day) === selectedDay;
+    const matchesDay = activeDays.size === 0 || activeDays.has(normalizeDay(row.meeting_day));
     const matchesHybrid = !hybridOnly || row.is_hybrid === true;
 
     return matchesSearch && matchesDay && matchesHybrid;
   });
 
-  if (selectedOrgId && !filteredRows.some((row) => row.org_id === selectedOrgId)) {
+  if (selectedOrgId && !filteredRows.some((row) => String(row.org_id) === String(selectedOrgId))) {
     selectedOrgId = null;
   }
 
+  renderDayToggles();
   renderMarkers(filteredRows);
   renderLocationList(filteredRows);
   updateStatus(filteredRows);
@@ -269,11 +295,26 @@ function focusLocation(orgId) {
   marker.openPopup();
 }
 
+function toggleDay(day) {
+  if (!DAYS_OF_WEEK.includes(day)) {
+    return;
+  }
+
+  if (activeDays.has(day)) {
+    activeDays.delete(day);
+  } else {
+    activeDays.add(day);
+  }
+
+  selectedOrgId = null;
+  applyFilters();
+}
+
 function resetFilters() {
   searchInputEl.value = '';
-  dayFilterEl.value = '';
   hybridOnlyEl.checked = false;
   selectedOrgId = null;
+  activeDays.clear();
   applyFilters();
 }
 
@@ -315,15 +356,25 @@ async function loadLocations() {
   allRows = normalizeRows(data);
   filteredRows = [...allRows];
 
+  renderDayToggles();
   renderMarkers(filteredRows);
   renderLocationList(filteredRows);
   updateStatus(filteredRows);
 }
 
 searchInputEl.addEventListener('input', applyFilters);
-dayFilterEl.addEventListener('change', applyFilters);
 hybridOnlyEl.addEventListener('change', applyFilters);
 resetFiltersEl.addEventListener('click', resetFilters);
+
+dayToggleGroupEl.addEventListener('click', (event) => {
+  const toggleButton = event.target.closest('.day-toggle');
+
+  if (!toggleButton) {
+    return;
+  }
+
+  toggleDay(toggleButton.dataset.day);
+});
 
 locationListEl.addEventListener('click', (event) => {
   const card = event.target.closest('.location-card');

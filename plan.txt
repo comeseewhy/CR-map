@@ -196,26 +196,3 @@ Step 6
 
 Do a final accessibility/mobile polish pass.
 
-What I would build next, specifically
-
-The next code revision should include:
-
-fixed-height app shell
-independently scrollable sidebar
-seven day toggle buttons
-combined day filtering logic
-day-coloured custom markers
-updated status text
-slightly improved visual hierarchy
-
-That is the highest-value next iteration.
-
-After that, the next likely feature would be:
-
-“show only locations currently visible on map”
-or
-“locate me / nearest meetings”
-
-But not before the above is stable.
-
-I can generate the next full version of index.html, style.css, and app.js around that plan.

@@ -40,19 +40,23 @@
             />
           </label>
 
-          <label class="filter-group" for="day-filter">
-            <span class="filter-label">Day</span>
-            <select id="day-filter" class="filter-input">
-              <option value="">All days</option>
-              <option value="Monday">Monday</option>
-              <option value="Tuesday">Tuesday</option>
-              <option value="Wednesday">Wednesday</option>
-              <option value="Thursday">Thursday</option>
-              <option value="Friday">Friday</option>
-              <option value="Saturday">Saturday</option>
-              <option value="Sunday">Sunday</option>
-            </select>
-          </label>
+          <div class="filter-group">
+            <span class="filter-label">Days</span>
+            <div
+              id="day-toggle-group"
+              class="day-toggle-group"
+              role="group"
+              aria-label="Filter by meeting day"
+            >
+              <button type="button" class="day-toggle" data-day="Monday" aria-pressed="false">Mon</button>
+              <button type="button" class="day-toggle" data-day="Tuesday" aria-pressed="false">Tue</button>
+              <button type="button" class="day-toggle" data-day="Wednesday" aria-pressed="false">Wed</button>
+              <button type="button" class="day-toggle" data-day="Thursday" aria-pressed="false">Thu</button>
+              <button type="button" class="day-toggle" data-day="Friday" aria-pressed="false">Fri</button>
+              <button type="button" class="day-toggle" data-day="Saturday" aria-pressed="false">Sat</button>
+              <button type="button" class="day-toggle" data-day="Sunday" aria-pressed="false">Sun</button>
+            </div>
+          </div>
 
           <label class="checkbox-row" for="hybrid-only">
             <input id="hybrid-only" type="checkbox" />
