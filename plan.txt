@@ -1,258 +1,295 @@
-1. Cross-reference: Plan vs Current State
-✅ Phase 1 — Layout containment
+Hello! I've attached my most recent project export for your reference, and generally-speaking I love the results and the project is almost complete. I just have some visual considerations to follow-up on, as well as one major inspirational request to dream with you about after this push is synced. I'll dream with you after we refine the look and functionality of this update.
 
-Status: COMPLETE (well executed)
+focal points: visual data representation, boundary considerations, scaling concerns, visual effect requests
 
-App is locked to viewport (#app { height: 100vh })
-Sidebar scroll is internal (location-list overflow-y)
-Map stays contained
-Mobile fallback handled
+---
 
-This matches your intended behavior almost exactly
+1)
 
-Verdict: Done. No need to revisit.
+(context - a textual reference of the chat bubble that prompts from the active place:
 
-✅ Phase 2 — Multi-day toggle filters
+{
 
-Status: COMPLETE (and clean)
+Forest Brook Community Church
+60 Kearney Dr, Ajax, Ontario, L1T 4N2
 
-Set activeDays implemented
-Toggle buttons with aria-pressed
-Combined filtering logic works correctly
-Reset works
+Ajax, Ontario
 
-This is exactly the model suggested in your plan
+Monday at 7:00 PM
 
-Verdict: Strong implementation.
+46 km away
 
-✅ Phase 3 — Day-based marker colours
+Mon
+hybrid in-person + online, same times
 
-Status: COMPLETE (and correctly done)
+Open in Google Maps
+Visit website
 
-Uses L.divIcon (good call)
-Consistent color system across:
-markers
-cards (border-left)
-badges
-toggles
+})
 
-This is textbook execution of the intended design
+some concerns and requests with the functionality features:
+- the segment is great, + colour coded, but upon clicking a different place from the displayed results in the side bar, the old segment remains / a new segment doesn't snap to the selected place. And if it did, the colour might change depending on the selection
+- the extent of the active place's full text box isn't being synced nicely and displayed perfectly, like in the filter functionality. The box is 1/2 displayed, so some text cuts out. It would be best if the active box / map zoom rotates to where the box is neatly captured on the very edge of the map layout - OR - the box just populates in the other direction if it is gonna get clipped. This should ensure that all screen monitors / different resolutions can all see a complete observation of the text box.
 
-Verdict: Done properly.
+- the displayed text is choppy, not effective of its space, and cumbersome... Name should be emboldened and distinctly spaced, but the other text should be more closely put together. Also listing the city separately is redundant and can be moved. The date and time is great to see, as is the emboldened distance. 
+- for hyperlinks in the active text box: I like "Visit Website" but I think, to be more effective of space, the 2nd button "Open in Google Maps" should be reduced in text to just "Map", and then the buttons can live side-by-side on the same line.
+- lastly for visual of active text button: It would be cool if the styling was consistent with the styling of the displayed results in the sidebar..! The filtered list of places has a sleak line of colour going down the left side pane of the respective block, and it's colour-coded as well by day. It would be cool if the selected text bubble had the same styling, was more condensed effectively, and looked more visually appealing.
 
-🟡 Phase 4 — Information hierarchy / UI polish
 
-Status: PARTIALLY COMPLETE
+Are you able to review the current version export, and help me generate a new concept that finishes refining the visual appeal of the map?
 
-You’ve already improved:
+Yes — this is a strong build already. You’ve got the data model, filtering, and spatial interaction working cleanly. What you’re feeling now is UI coherence + interaction state sync, which is exactly the right layer to refine at this stage.
 
-spacing
-card structure
-visual grouping
-consistent colour semantics
+I reviewed your export and here’s a tight, incremental refinement pass that addresses all your points without breaking your architecture.
 
-What’s still missing:
+🔧 Core Issues Identified (Root Causes)
+1. Route line not updating on selection
+routeLayer only updates inside findClosestMeeting()
+Clicking a sidebar item does NOT update the route
 
-stronger “selected” state (currently subtle)
-clearer hierarchy between:
-filters
-results
-tighter visual density (cards still slightly “loose”)
-no “primary action” (this is where Find closest fits)
+👉 Root issue: selection state ≠ route state
 
-Verdict: This phase is where your next UX gains come from.
+2. Popup clipping / half-visible
+Leaflet popup auto-placement isn’t constrained
+map.setView() centers marker → popup spills off screen
 
-❌ Phase 5 — Logo integration
+👉 Root issue: no offset-aware camera positioning
 
-Status: NOT IMPLEMENTED
+3. Popup visual density + hierarchy
+Everything is equal weight → hard to scan
+Redundant city line
+Actions stacked inefficiently
 
-You’ve added the asset but not placed it.
+👉 Root issue: no typographic hierarchy
 
-🟡 Phase 6 — Accessibility
+4. Visual inconsistency (sidebar vs popup)
+Sidebar cards = polished system
+Popup = separate design language
 
-Status: PARTIALLY COMPLETE
+👉 Root issue: two design systems
 
-Good:
+✅ What We’ll Do (Concept Direction)
 
-aria-pressed
-aria-live
-semantic buttons
+This is NOT a rewrite — just alignment.
 
-Missing:
+✨ Design principle:
 
-keyboard focus on cards → map sync clarity
-visible focus styling consistency
-status messaging could be more explicit
-🟡 Phase 7 — Code structure
+“The popup is just a floating version of the sidebar card”
 
-Status: MOSTLY GOOD
-
-Your file is already well-organized:
-
-constants
-helpers
-rendering
-filters
-
-Minor improvement:
-
-distance / geo logic will need a clean section
-2. Key Missing Features (from your description)
-🔴 1. “Find closest meeting” (core next feature)
-
-Not implemented yet — this is your biggest functional gap.
-
-🟡 2. External navigation (“Open in Google Maps”)
-
-Not implemented yet, but easy and low-risk.
-
-🟡 3. Logo placement
-
-Asset exists but unused.
-
-🟡 4. Minor UX refinements
-search placeholder mismatch (you noted)
-no “primary CTA” in UI
-no distance awareness in list
-3. Geolocation + Distance (Your Questions Answered)
-❓ Do you need an API to calculate distance?
-
-No.
-
-You can compute distance entirely client-side using the
-👉 Haversine formula
-
-This uses lat/lng you already have.
-
-Implications:
-
-✅ no API calls
-✅ no cost
-✅ instant performance
-✅ privacy-safe (no server storage)
-❓ How to get user location?
-
-Use browser-native:
-
-navigator.geolocation.getCurrentPosition(...)
-
-Important constraints:
-
-requires HTTPS (GitHub Pages ✅)
-user must consent
-no storage required (you can keep it in memory only)
-❓ Privacy concern (“don’t store location”)
-
-You’re safe if you:
-
-do NOT send to Supabase
-do NOT persist in localStorage
-just use it in-memory for calculation
-❓ Opening Google Maps without API
-
-You do NOT need Google Maps API.
-
-Just use a link:
-
-https://www.google.com/maps/dir/?api=1&destination=LAT,LNG
-
-Zero cost. Zero auth.
-
-4. Recommended Next 3 Pushes
-
-This is the cleanest execution path.
-
-🚀 PUSH 1 — Core Feature: “Find closest meeting”
-Add:
-button: "Find closest meeting"
-geolocation request
-Haversine distance calculation
-compare ONLY against filteredRows
-select + zoom to closest result
-UX behavior:
-respects:
-day filters
-search filters
-fallback:
-if no filters → all locations
-Optional enhancement:
-sort list by distance after calculation
-🚀 PUSH 2 — Navigation + Logo + UX polish
-Add:
-1. “Open in Maps” link (in popup)
-https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}
-2. Logo placement
-right side of header
-flex container:
-left: title
-right: logo
-3. Improve selected state
-stronger background
-maybe slight scale or shadow
-4. Update placeholder
-
-You already flagged this:
-
-"Search by name, city, meeting time..."
-
-🚀 PUSH 3 — Distance-aware UX refinement
-Add:
-1. Show distance in cards
-
-Example:
-
-2.3 km away
-2. Optional sorting toggle
-“Sort by distance”
-fallback to alphabetical
-3. Improve status messaging
-
-Example:
-
-Showing 12 locations (sorted by distance from you)
-5. Subtle but Important Improvement
-
-Right now:
-
-fitMapToRows(filteredRows);
-
-After “closest meeting”, you should:
-
-override this behavior
-zoom ONLY to selected location
-
-Otherwise:
-
-map will keep zooming out after filter changes
-6. Strategic Advice (what to focus on)
-
-You’re no longer in “build phase” — you’re in:
-
-interaction design + utility phase
-
-Your app is already:
-
-technically sound
-well-structured
-visually coherent
-
-The biggest gains now come from:
-
-decision support
-closest meeting
-time filtering (already strong)
-reducing friction
-one-click navigation
-clear selection
-confidence
-logo
-consistent UI
-Bottom Line
-
-You’ve already completed ~70–80% of your original roadmap.
-
-The remaining work is:
-
-not structural
-not architectural
-but interaction-focused
+🧠 Changes Overview
+Functional fixes
+Route updates when selecting any location (if user location exists)
+Clean previous route properly
+Map pans with offset so popup is always visible
+UI improvements
+Popup becomes compact card-style
+Remove redundant city line
+Inline buttons: Map | Website
+Strong hierarchy:
+Name (bold)
+Address
+Day/time
+Distance (highlight)
+Add left color bar (like sidebar)
+🛠️ Code Changes
+1. Update focusLocation() (KEY FIX)
+Reason
+Sync selection with route + ensure popup visibility
+Replace ENTIRE function:
+function focusLocation(orgId, options = {}) {
+  const {
+    openPopup = true,
+    keepCurrentZoom = false
+  } = options;
+
+  const marker = markerByOrgId.get(String(orgId));
+  if (!marker) return;
+
+  selectedOrgId = orgId;
+  shouldAutoFitMap = false;
+
+  const selectedRow = filteredRows.find(r => String(r.org_id) === String(orgId));
+
+  renderLocationList(filteredRows);
+  scrollSelectedCardIntoView();
+
+  const latLng = marker.getLatLng();
+  const nextZoom = keepCurrentZoom ? map.getZoom() : Math.max(map.getZoom(), FOCUSED_ZOOM);
+
+  // 🔥 OFFSET the map so popup is visible
+  const offsetY = 120; // pixels upward shift
+  const point = map.project(latLng, nextZoom).subtract([0, offsetY]);
+  const newLatLng = map.unproject(point, nextZoom);
+
+  map.setView(newLatLng, nextZoom, { animate: true });
+
+  if (openPopup) marker.openPopup();
+
+  // 🔥 NEW: update route if user location exists
+  if (closestSession && closestSession.userLat && selectedRow) {
+    closestSession.closestRow = selectedRow;
+    renderClosestSessionVisuals();
+  }
+}
+2. Improve Route Sync Behavior
+Reason
+Ensure only ONE route exists and updates cleanly
+Update renderClosestSessionVisuals()
+
+Replace function with:
+
+function renderClosestSessionVisuals() {
+  routeLayer.clearLayers();
+
+  if (!closestSession) return;
+
+  const { userLat, userLng, closestRow } = closestSession;
+  if (!closestRow) return;
+
+  const routeColor = getDayColor(closestRow.meeting_day);
+
+  const userMarker = L.marker([userLat, userLng], {
+    icon: buildUserMarkerIcon()
+  }).bindPopup('<div class="user-popup-label">Your location</div>');
+
+  const line = L.polyline(
+    [
+      [userLat, userLng],
+      [closestRow.lat, closestRow.lng]
+    ],
+    {
+      color: routeColor,
+      weight: 4,
+      opacity: 0.9,
+      dashArray: '8 6',
+      lineCap: 'round'
+    }
+  );
+
+  line.addTo(routeLayer);
+  userMarker.addTo(routeLayer);
+}
+3. Popup Redesign (MAJOR VISUAL UPGRADE)
+Reason
+
+Unify with sidebar + improve readability
+
+Replace buildPopupHtml() entirely:
+function buildPopupHtml(row) {
+  const name = escapeHtml(row.name || 'Unnamed location');
+  const address = escapeHtml(row.address || 'Address unavailable');
+  const meetingLine = escapeHtml(formatMeetingLine(row));
+  const notes = row.notes ? escapeHtml(row.notes) : '';
+  const website = row.website ? String(row.website).trim() : '';
+  const mapsUrl = buildGoogleMapsUrl(row);
+
+  const dayConfig = getDayConfig(row.meeting_day);
+  const color = getDayColor(row.meeting_day);
+
+  const distanceHtml = Number.isFinite(row.distanceKm)
+    ? `<div class="popup-distance">${escapeHtml(formatDistanceKm(row.distanceKm))}</div>`
+    : '';
+
+  const websiteHtml = website
+    ? `<a class="popup-btn" href="${escapeHtml(website)}" target="_blank">Website</a>`
+    : '';
+
+  return `
+    <div class="popup-card" style="border-left: 5px solid ${color}">
+      <div class="popup-title">${name}</div>
+      <div class="popup-address">${address}</div>
+      <div class="popup-meeting">${meetingLine}</div>
+      ${distanceHtml}
+      ${notes ? `<div class="popup-notes">${notes}</div>` : ''}
+
+      <div class="popup-actions">
+        <a class="popup-btn" href="${escapeHtml(mapsUrl)}" target="_blank">Map</a>
+        ${websiteHtml}
+      </div>
+    </div>
+  `;
+}
+4. CSS Additions (Popup Styling)
+Add to style.css
+.popup-card {
+  font-family: Arial, sans-serif;
+  padding: 10px 12px;
+  min-width: 220px;
+}
+
+.popup-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.popup-address {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  margin-bottom: 4px;
+}
+
+.popup-meeting {
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.popup-distance {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.popup-notes {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin-bottom: 8px;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.popup-btn {
+  flex: 1;
+  text-align: center;
+  padding: 6px 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.popup-btn:hover {
+  background: var(--color-primary-soft);
+}
+🎯 What This Achieves
+✔ Interaction
+Route updates when clicking ANY location
+Only one route exists at a time
+Color always matches selected meeting
+✔ Map Behavior
+Popup never clips off screen
+Camera feels intentional, not default Leaflet
+✔ Visual System
+Sidebar + popup now feel like one system
+Cleaner hierarchy
+Better mobile readability
+💡 Optional Next Step (tiny but powerful)
+
+If you want to push polish even further:
+
+Animate route line on update (fade in)
+Slight pulse on selected marker
+Add subtle elevation to popup
+🚀 Where This Leaves You
+
+You’re now at:
+
+Functional completeness ✅
+Visual coherence ✅
+Interaction clarity ✅
+
+When you're ready, I’d love to hear your “dream” idea — that’s likely where we move from good tool → memorable experience.
