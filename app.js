@@ -31,6 +31,18 @@ const DAY_CONFIG = {
     cardClass: 'day-friday',
     badgeClass: 'day-badge--friday',
     markerClass: 'cr-marker--friday'
+  },
+  Saturday: {
+    shortLabel: 'Sat',
+    cardClass: 'day-saturday',
+    badgeClass: 'day-badge--saturday',
+    markerClass: 'cr-marker--saturday'
+  },
+  Sunday: {
+    shortLabel: 'Sun',
+    cardClass: 'day-sunday',
+    badgeClass: 'day-badge--sunday',
+    markerClass: 'cr-marker--sunday'
   }
 };
 
@@ -82,7 +94,9 @@ function normalizeDay(dayValue) {
     tuesday: 'Tuesday',
     wednesday: 'Wednesday',
     thursday: 'Thursday',
-    friday: 'Friday'
+    friday: 'Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday'
   };
 
   return dayMap[trimmed] || String(dayValue).trim();
@@ -90,6 +104,50 @@ function normalizeDay(dayValue) {
 
 function getDayConfig(day) {
   return DAY_CONFIG[normalizeDay(day)] || null;
+}
+
+function normalizeMeetingTimeForSearch(value) {
+  if (!value) {
+    return '';
+  }
+
+  let text = String(value).trim().toLowerCase();
+
+  text = text.replace(/\s+/g, '');
+  text = text.replace(/\./g, '');
+
+  const compactMatch = text.match(/^(\d{1,2})(?::?(\d{2}))?(am|pm)?$/);
+
+  if (!compactMatch) {
+    return text;
+  }
+
+  const hour = compactMatch[1];
+  const minutes = compactMatch[2] || '';
+  const meridiem = compactMatch[3] || '';
+
+  const tokens = new Set();
+  const hourNumber = String(Number(hour));
+
+  if (meridiem) {
+    tokens.add(`${hourNumber}${meridiem}`);
+
+    if (minutes && minutes !== '00') {
+      tokens.add(`${hourNumber}:${minutes}${meridiem}`);
+    } else {
+      tokens.add(`${hourNumber}:00${meridiem}`);
+    }
+  } else {
+    tokens.add(hourNumber);
+
+    if (minutes) {
+      tokens.add(`${hourNumber}:${minutes}`);
+    }
+  }
+
+  tokens.add(text);
+
+  return Array.from(tokens).join(' ');
 }
 
 function formatMeetingLine(row) {
@@ -147,6 +205,8 @@ function buildPopupHtml(row) {
 }
 
 function buildSearchText(row) {
+  const normalizedMeetingTime = normalizeMeetingTimeForSearch(row.meeting_time);
+
   return [
     row.name,
     row.address,
@@ -155,11 +215,24 @@ function buildSearchText(row) {
     row.notes,
     row.website,
     row.meeting_day,
-    row.meeting_time
+    row.meeting_time,
+    normalizedMeetingTime
   ]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
+}
+
+function normalizeSearchTerm(value) {
+  const raw = String(value || '').trim().toLowerCase();
+
+  if (!raw) {
+    return '';
+  }
+
+  const normalizedTime = normalizeMeetingTimeForSearch(raw);
+
+  return `${raw} ${normalizedTime}`.trim();
 }
 
 function normalizeRows(data) {
@@ -296,7 +369,7 @@ function updateStatus(rows) {
   }
 
   if (activeDays.size === 0) {
-    statusEl.textContent = `Showing ${shown} of ${total} locations (all weekdays).`;
+    statusEl.textContent = `Showing ${shown} of ${total} locations (all days).`;
     return;
   }
 
@@ -305,10 +378,11 @@ function updateStatus(rows) {
 }
 
 function applyFilters() {
-  const searchTerm = searchInputEl.value.trim().toLowerCase();
+  const searchTerm = normalizeSearchTerm(searchInputEl.value);
 
   filteredRows = allRows.filter((row) => {
-    const matchesSearch = !searchTerm || buildSearchText(row).includes(searchTerm);
+    const searchText = buildSearchText(row);
+    const matchesSearch = !searchTerm || searchTerm.split(' ').every((token) => !token || searchText.includes(token));
     const normalizedDay = normalizeDay(row.meeting_day);
     const matchesDay = activeDays.size === 0 || activeDays.has(normalizedDay);
 

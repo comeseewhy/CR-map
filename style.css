@@ -8,6 +8,8 @@
   --color-wednesday: #c0392b;
   --color-thursday: #e67e22;
   --color-friday: #2f6fed;
+  --color-saturday: #ff5fa2;
+  --color-sunday: #7b4ce2;
   --color-gold-text: #b88a00;
   --color-border: #dddddd;
   --color-text: #1f1f1f;
@@ -199,6 +201,22 @@ a {
   background: rgba(47, 111, 237, 0.14);
 }
 
+.day-toggle--saturday {
+  border-color: var(--color-saturday);
+}
+
+.day-toggle--saturday.is-active {
+  background: rgba(255, 95, 162, 0.16);
+}
+
+.day-toggle--sunday {
+  border-color: var(--color-sunday);
+}
+
+.day-toggle--sunday.is-active {
+  background: rgba(123, 76, 226, 0.16);
+}
+
 .reset-button {
   padding: 10px 12px;
   border: 1px solid #cccccc;
@@ -276,6 +294,14 @@ a {
   border-left-color: var(--color-friday);
 }
 
+.location-card.day-saturday {
+  border-left-color: var(--color-saturday);
+}
+
+.location-card.day-sunday {
+  border-left-color: var(--color-sunday);
+}
+
 .location-card h3 {
   margin: 0 0 8px;
   font-size: 1rem;
@@ -348,6 +374,14 @@ a {
   background: var(--color-friday);
 }
 
+.day-badge--saturday {
+  background: var(--color-saturday);
+}
+
+.day-badge--sunday {
+  background: var(--color-sunday);
+}
+
 .cr-marker {
   width: 18px;
   height: 18px;
@@ -374,6 +408,14 @@ a {
 
 .cr-marker--friday {
   background: var(--color-friday);
+}
+
+.cr-marker--saturday {
+  background: var(--color-saturday);
+}
+
+.cr-marker--sunday {
+  background: var(--color-sunday);
 }
 
 .cr-marker--default {
