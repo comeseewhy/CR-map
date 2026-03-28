@@ -22,14 +22,15 @@
     </header>
 
     <main class="main-layout">
-      <section class="sidebar">
-        <h2>Prototype</h2>
-        <p>
-          This is the first working version of the Celebrate Recovery Ontario map.
+      <section class="sidebar" aria-label="Location details">
+        <h2>Locations</h2>
+        <p class="sidebar-intro">
+          This prototype loads Celebrate Recovery locations from Supabase and displays them on the map.
         </p>
-        <p>
-          Right now it displays one sample location to confirm the project is wired correctly.
-        </p>
+
+        <p id="status" class="status" aria-live="polite">Starting…</p>
+
+        <div id="location-list" class="location-list" aria-live="polite"></div>
       </section>
 
       <section class="map-panel">
@@ -43,6 +44,8 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
