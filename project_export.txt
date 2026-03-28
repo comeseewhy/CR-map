@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CR-map - find your place to recover</title>
+  <title>CR-map - find your place to recover :)</title>
 
   <link
     rel="stylesheet"
@@ -18,7 +18,7 @@
 <body>
   <div id="app">
     <header class="site-header">
-      <h1>CR-map - find your place to recover</h1>
+      <h1>CR-map - find your place to recover :)</h1>
       <p class="site-subtitle">
         <a
           href="https://www.celebraterecovery.ca/ontario/"
@@ -39,7 +39,7 @@
               id="search-input"
               class="filter-input"
               type="search"
-              placeholder="Search by name, city, address..."
+              placeholder="Search by name/city/meet times.."
               autocomplete="off"
             />
           </label>
@@ -92,6 +92,22 @@
               >
                 Fri
               </button>
+              <button
+                type="button"
+                class="day-toggle day-toggle--saturday"
+                data-day="Saturday"
+                aria-pressed="false"
+              >
+                Sat
+              </button>
+              <button
+                type="button"
+                class="day-toggle day-toggle--sunday"
+                data-day="Sunday"
+                aria-pressed="false"
+              >
+                Sun
+              </button>
             </div>
           </div>
 
@@ -133,6 +149,8 @@
   --color-wednesday: #c0392b;
   --color-thursday: #e67e22;
   --color-friday: #2f6fed;
+  --color-saturday: #ff5fa2;
+  --color-sunday: #7b4ce2;
   --color-gold-text: #b88a00;
   --color-border: #dddddd;
   --color-text: #1f1f1f;
@@ -324,6 +342,22 @@ a {
   background: rgba(47, 111, 237, 0.14);
 }
 
+.day-toggle--saturday {
+  border-color: var(--color-saturday);
+}
+
+.day-toggle--saturday.is-active {
+  background: rgba(255, 95, 162, 0.16);
+}
+
+.day-toggle--sunday {
+  border-color: var(--color-sunday);
+}
+
+.day-toggle--sunday.is-active {
+  background: rgba(123, 76, 226, 0.16);
+}
+
 .reset-button {
   padding: 10px 12px;
   border: 1px solid #cccccc;
@@ -401,6 +435,14 @@ a {
   border-left-color: var(--color-friday);
 }
 
+.location-card.day-saturday {
+  border-left-color: var(--color-saturday);
+}
+
+.location-card.day-sunday {
+  border-left-color: var(--color-sunday);
+}
+
 .location-card h3 {
   margin: 0 0 8px;
   font-size: 1rem;
@@ -473,6 +515,14 @@ a {
   background: var(--color-friday);
 }
 
+.day-badge--saturday {
+  background: var(--color-saturday);
+}
+
+.day-badge--sunday {
+  background: var(--color-sunday);
+}
+
 .cr-marker {
   width: 18px;
   height: 18px;
@@ -499,6 +549,14 @@ a {
 
 .cr-marker--friday {
   background: var(--color-friday);
+}
+
+.cr-marker--saturday {
+  background: var(--color-saturday);
+}
+
+.cr-marker--sunday {
+  background: var(--color-sunday);
 }
 
 .cr-marker--default {
@@ -578,6 +636,18 @@ const DAY_CONFIG = {
     cardClass: 'day-friday',
     badgeClass: 'day-badge--friday',
     markerClass: 'cr-marker--friday'
+  },
+  Saturday: {
+    shortLabel: 'Sat',
+    cardClass: 'day-saturday',
+    badgeClass: 'day-badge--saturday',
+    markerClass: 'cr-marker--saturday'
+  },
+  Sunday: {
+    shortLabel: 'Sun',
+    cardClass: 'day-sunday',
+    badgeClass: 'day-badge--sunday',
+    markerClass: 'cr-marker--sunday'
   }
 };
 
@@ -629,7 +699,9 @@ function normalizeDay(dayValue) {
     tuesday: 'Tuesday',
     wednesday: 'Wednesday',
     thursday: 'Thursday',
-    friday: 'Friday'
+    friday: 'Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday'
   };
 
   return dayMap[trimmed] || String(dayValue).trim();
@@ -637,6 +709,50 @@ function normalizeDay(dayValue) {
 
 function getDayConfig(day) {
   return DAY_CONFIG[normalizeDay(day)] || null;
+}
+
+function normalizeMeetingTimeForSearch(value) {
+  if (!value) {
+    return '';
+  }
+
+  let text = String(value).trim().toLowerCase();
+
+  text = text.replace(/\s+/g, '');
+  text = text.replace(/\./g, '');
+
+  const compactMatch = text.match(/^(\d{1,2})(?::?(\d{2}))?(am|pm)?$/);
+
+  if (!compactMatch) {
+    return text;
+  }
+
+  const hour = compactMatch[1];
+  const minutes = compactMatch[2] || '';
+  const meridiem = compactMatch[3] || '';
+
+  const tokens = new Set();
+  const hourNumber = String(Number(hour));
+
+  if (meridiem) {
+    tokens.add(`${hourNumber}${meridiem}`);
+
+    if (minutes && minutes !== '00') {
+      tokens.add(`${hourNumber}:${minutes}${meridiem}`);
+    } else {
+      tokens.add(`${hourNumber}:00${meridiem}`);
+    }
+  } else {
+    tokens.add(hourNumber);
+
+    if (minutes) {
+      tokens.add(`${hourNumber}:${minutes}`);
+    }
+  }
+
+  tokens.add(text);
+
+  return Array.from(tokens).join(' ');
 }
 
 function formatMeetingLine(row) {
@@ -694,6 +810,8 @@ function buildPopupHtml(row) {
 }
 
 function buildSearchText(row) {
+  const normalizedMeetingTime = normalizeMeetingTimeForSearch(row.meeting_time);
+
   return [
     row.name,
     row.address,
@@ -702,11 +820,24 @@ function buildSearchText(row) {
     row.notes,
     row.website,
     row.meeting_day,
-    row.meeting_time
+    row.meeting_time,
+    normalizedMeetingTime
   ]
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
+}
+
+function normalizeSearchTerm(value) {
+  const raw = String(value || '').trim().toLowerCase();
+
+  if (!raw) {
+    return '';
+  }
+
+  const normalizedTime = normalizeMeetingTimeForSearch(raw);
+
+  return `${raw} ${normalizedTime}`.trim();
 }
 
 function normalizeRows(data) {
@@ -843,7 +974,7 @@ function updateStatus(rows) {
   }
 
   if (activeDays.size === 0) {
-    statusEl.textContent = `Showing ${shown} of ${total} locations (all weekdays).`;
+    statusEl.textContent = `Showing ${shown} of ${total} locations (all days).`;
     return;
   }
 
@@ -852,10 +983,11 @@ function updateStatus(rows) {
 }
 
 function applyFilters() {
-  const searchTerm = searchInputEl.value.trim().toLowerCase();
+  const searchTerm = normalizeSearchTerm(searchInputEl.value);
 
   filteredRows = allRows.filter((row) => {
-    const matchesSearch = !searchTerm || buildSearchText(row).includes(searchTerm);
+    const searchText = buildSearchText(row);
+    const matchesSearch = !searchTerm || searchTerm.split(' ').every((token) => !token || searchText.includes(token));
     const normalizedDay = normalizeDay(row.meeting_day);
     const matchesDay = activeDays.size === 0 || activeDays.has(normalizedDay);
 
@@ -978,4 +1110,4 @@ locationListEl.addEventListener('click', (event) => {
 loadLocations();
 
 
-Generated: 03/28/2026 14:59:25
+Generated: 03/28/2026 15:12:32
