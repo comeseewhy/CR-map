@@ -34,7 +34,7 @@
       <section class="sidebar" aria-label="Location filters and results">
         <div class="filters" aria-label="Filters">
           <label class="filter-group" for="search-input">
-            <span class="filter-label">Search</span>
+            <span class="filter-label">Filter</span>
             <input
               id="search-input"
               class="filter-input"
@@ -1110,4 +1110,4 @@ locationListEl.addEventListener('click', (event) => {
 loadLocations();
 
 
-Generated: 03/28/2026 15:12:32
+Generated: 03/28/2026 15:18:10
