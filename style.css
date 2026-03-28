@@ -6,7 +6,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  height: 100%;
   font-family: Arial, sans-serif;
   background: #f6f6f6;
   color: #1f1f1f;
@@ -14,6 +14,7 @@ body {
 
 body {
   min-height: 100vh;
+  overflow: hidden;
 }
 
 button,
@@ -23,12 +24,14 @@ select {
 }
 
 #app {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .site-header {
+  flex: 0 0 auto;
   padding: 16px;
   background: #ffffff;
   border-bottom: 1px solid #dddddd;
@@ -46,28 +49,34 @@ select {
 }
 
 .main-layout {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: 320px 1fr;
-  flex: 1;
-  min-height: 0;
+  overflow: hidden;
 }
 
 .sidebar {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   padding: 16px;
   background: #ffffff;
   border-right: 1px solid #dddddd;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .sidebar h2 {
   margin-top: 0;
   margin-bottom: 12px;
   font-size: 1rem;
+  flex: 0 0 auto;
 }
 
 .sidebar-intro {
   margin-top: 0;
   line-height: 1.5;
+  flex: 0 0 auto;
 }
 
 .filters {
@@ -78,6 +87,7 @@ select {
   background: #fafafa;
   border: 1px solid #dddddd;
   border-radius: 10px;
+  flex: 0 0 auto;
 }
 
 .filter-group {
@@ -124,11 +134,16 @@ select {
   border: 1px solid #dddddd;
   border-radius: 8px;
   font-size: 0.95rem;
+  flex: 0 0 auto;
 }
 
 .location-list {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .location-card {
@@ -177,11 +192,12 @@ select {
 
 .map-panel {
   min-height: 0;
+  overflow: hidden;
 }
 
 #map {
   width: 100%;
-  height: calc(100vh - 77px);
+  height: 100%;
 }
 
 .leaflet-popup-content {
@@ -197,14 +213,36 @@ select {
 }
 
 @media (max-width: 768px) {
+  html,
+  body {
+    height: auto;
+  }
+
+  body {
+    overflow: auto;
+  }
+
+  #app {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
   .main-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
+    overflow: visible;
   }
 
   .sidebar {
     border-right: none;
     border-bottom: 1px solid #dddddd;
+    overflow: visible;
+  }
+
+  .location-list {
+    max-height: 40vh;
+    overflow-y: auto;
   }
 
   #map {

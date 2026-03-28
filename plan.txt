@@ -1,0 +1,221 @@
+Phase 1 — Fix layout containment first
+
+This should be the immediate priority.
+
+Right now the sidebar content is driving page height beyond the intended viewport, instead of staying inside a fixed application frame with its own internal scroll. In your current CSS, the sidebar has overflow-y: auto, but the overall layout still allows the page to grow with content rather than keeping the app locked to the map-height experience.
+
+Goal
+
+Make the app behave like this:
+
+header at top
+map + sidebar fill the remaining viewport height
+page itself does not keep extending downward
+sidebar gets its own vertical scrollbar
+map stays visually contained to the app frame
+What to change conceptually
+lock the app shell to viewport height
+ensure the grid container and both panels can shrink within that height
+give the sidebar a scrollable inner content area
+avoid letting the whole document become taller than the viewport on desktop
+Why this comes first
+
+Every other UI improvement will feel messy until the layout containment is correct.
+
+Phase 2 — Replace single day dropdown with multi-toggle day filters
+
+This is your best feature upgrade.
+
+Your current implementation uses one day dropdown, which only allows one selected day at a time.
+Your intended interaction is better: all seven days visible as toggle chips/buttons, each independently on/off, with combined filtering applied instantly.
+
+Goal
+
+Users should be able to:
+
+click Monday on/off
+click Tuesday on/off
+select any combination of days
+see markers and location cards update immediately
+keep search and hybrid filters working alongside day toggles
+Recommended model
+
+Use a Set of active days in app.js, something like:
+
+no active days = show all days
+one or more active days = only show matching rows
+Why this is better
+
+It matches the way people actually browse meetings:
+
+“show me Tuesday and Thursday”
+“hide Sunday”
+“compare weekday options quickly”
+
+This is much more usable than a dropdown.
+
+Phase 3 — Introduce day-based marker colours
+
+This is the right moment to add map meaning, not just decoration.
+
+Once days become multi-select toggles, marker colour can reinforce the filter visually.
+
+Recommended system
+
+Assign one consistent colour per day:
+
+Monday
+Tuesday
+Wednesday
+Thursday
+Friday
+Saturday
+Sunday
+Important implementation note
+
+Default Leaflet markers are image-based and awkward to recolour cleanly. The simplest path is to switch to L.divIcon markers and style them with CSS.
+
+That will let you:
+
+apply day-specific classes
+keep colours consistent with the filter chips
+avoid image asset complexity
+later support selected/hover states more easily
+Design rule
+
+Keep the colour system consistent across:
+
+day toggle buttons
+map markers
+small day badges in cards, if added later
+
+That consistency will make the interface feel much more intentional.
+
+Phase 4 — Improve information hierarchy and visual structure
+
+Your current app is readable, but still prototype-like. The next visual pass should focus on clarity and restraint, not ornament.
+
+Priorities
+tighter content width in the sidebar
+more deliberate spacing scale
+stronger card hierarchy
+clearer selected state
+better contrast and focus states
+cleaner mobile stacking behavior
+Specific UI goals
+make the sidebar feel like a controlled panel, not a long page column
+keep filter controls visually grouped and compact
+reduce visual noise in cards
+make the map the main experience, with the list clearly secondary but useful
+Good boundary decisions
+desktop sidebar width: around 340–380px max
+map gets the rest
+content inside sidebar should not feel stretched
+on mobile, filters should remain easy to tap without pushing the map too far down
+Phase 5 — Add the CR logo cleanly
+
+Yes, the logo belongs in the repo.
+
+Best approach
+
+Add it to something like:
+
+/assets/cr-logo.png
+
+Then use it in one of these restrained places:
+
+header beside title
+sidebar header block
+small branded map corner card
+Recommendation
+
+Start with the header beside the title.
+That is the safest first placement.
+
+Avoid for now
+oversized watermark on the map
+decorative floating logo without functional purpose
+large image that pushes layout down
+
+The logo should support trust and recognition, not compete with the map.
+
+Phase 6 — Accessibility and usability pass
+
+This should be built into the refactor, not deferred.
+
+Focus areas
+proper button semantics for day toggles
+visible keyboard focus
+sufficient contrast for coloured states
+labels that remain clear without relying only on colour
+tap targets large enough on mobile
+aria-pressed for toggle buttons
+status text that updates when filters change
+Important principle
+
+Do not encode day solely by marker colour. Also show the day in text somewhere relevant.
+
+Phase 7 — Small structural cleanup in code
+
+Before the app grows further, it will help to separate responsibilities a bit more in app.js.
+
+Suggested internal sections
+constants and day metadata
+state
+formatting helpers
+filtering logic
+marker rendering
+list rendering
+UI event wiring
+data loading
+
+You do not need a framework. Just slightly clearer organization.
+
+Recommended implementation order
+Step 1
+
+Fix the layout shell so the page height is contained and the sidebar scrolls internally.
+
+Step 2
+
+Replace the single day dropdown with seven toggle buttons.
+
+Step 3
+
+Add day-coloured markers using divIcon.
+
+Step 4
+
+Restyle the filter bar and cards so the day system looks intentional.
+
+Step 5
+
+Add the CR logo from a repo asset.
+
+Step 6
+
+Do a final accessibility/mobile polish pass.
+
+What I would build next, specifically
+
+The next code revision should include:
+
+fixed-height app shell
+independently scrollable sidebar
+seven day toggle buttons
+combined day filtering logic
+day-coloured custom markers
+updated status text
+slightly improved visual hierarchy
+
+That is the highest-value next iteration.
+
+After that, the next likely feature would be:
+
+“show only locations currently visible on map”
+or
+“locate me / nearest meetings”
+
+But not before the above is stable.
+
+I can generate the next full version of index.html, style.css, and app.js around that plan.
