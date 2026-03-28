@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Celebrate Recovery Map</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="site-header">
+      <h1>Celebrate Recovery Map</h1>
+      <p class="site-subtitle">Ontario locations</p>
+    </header>
+
+    <main class="main-layout">
+      <section class="sidebar">
+        <h2>Prototype</h2>
+        <p>
+          This is the first working version of the Celebrate Recovery Ontario map.
+        </p>
+        <p>
+          Right now it displays one sample location to confirm the project is wired correctly.
+        </p>
+      </section>
+
+      <section class="map-panel">
+        <div id="map" aria-label="Map of Celebrate Recovery locations"></div>
+      </section>
+    </main>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="app.js"></script>
+</body>
+</html>
