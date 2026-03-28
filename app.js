@@ -72,7 +72,6 @@ const markersLayer = L.layerGroup().addTo(map);
 let allRows = [];
 let filteredRows = [];
 let selectedOrgId = null;
-let closestResult = null;
 let isLocatingUser = false;
 let shouldAutoFitMap = true;
 
@@ -222,6 +221,11 @@ function getCurrentPosition() {
   });
 }
 
+function buildGoogleMapsUrl(row) {
+  const destination = `${row.lat},${row.lng}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+}
+
 function setClosestButtonLoading(isLoading) {
   isLocatingUser = isLoading;
   closestMeetingEl.disabled = isLoading;
@@ -236,6 +240,7 @@ function buildPopupHtml(row) {
   const meetingLine = escapeHtml(formatMeetingLine(row));
   const notes = row.notes ? escapeHtml(row.notes) : '';
   const website = row.website ? String(row.website).trim() : '';
+  const mapsUrl = buildGoogleMapsUrl(row);
   const dayConfig = getDayConfig(row.meeting_day);
   const badgeHtml = dayConfig
     ? `<span class="day-badge ${dayConfig.badgeClass}">${escapeHtml(dayConfig.shortLabel)}</span>`
@@ -247,8 +252,14 @@ function buildPopupHtml(row) {
     : '';
 
   const websiteHtml = website
-    ? `<p class="popup-line"><a href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Visit website</a></p>`
+    ? `<a class="popup-action-link" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
     : '';
+
+  const mapsHtml = `
+    <a class="popup-action-link" href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer">
+      Open in Google Maps
+    </a>
+  `;
 
   const notesHtml = notes
     ? `<p class="popup-line">${notes}</p>`
@@ -263,7 +274,10 @@ function buildPopupHtml(row) {
       ${distanceHtml}
       ${badgeHtml}
       ${notesHtml}
-      ${websiteHtml}
+      <div class="popup-actions">
+        ${mapsHtml}
+        ${websiteHtml}
+      </div>
     </div>
   `;
 }
@@ -413,7 +427,6 @@ function renderMarkers(rows) {
 
     marker.on('click', () => {
       selectedOrgId = row.org_id;
-      closestResult = row;
       renderLocationList(filteredRows);
       scrollSelectedCardIntoView();
     });
@@ -451,8 +464,6 @@ function clearDistanceData() {
   allRows.forEach((row) => {
     delete row.distanceKm;
   });
-
-  closestResult = null;
 }
 
 function scrollSelectedCardIntoView() {
@@ -596,7 +607,6 @@ async function findClosestMeeting() {
       return;
     }
 
-    closestResult = closestRow;
     selectedOrgId = closestRow.org_id;
     shouldAutoFitMap = false;
 

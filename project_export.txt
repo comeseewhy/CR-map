@@ -18,16 +18,28 @@
 <body>
   <div id="app">
     <header class="site-header">
-      <h1>CR-map - find your place to recover :)</h1>
-      <p class="site-subtitle">
-        <a
-          href="https://www.celebraterecovery.ca/ontario/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          https://www.celebraterecovery.ca/ontario/
-        </a>
-      </p>
+      <div class="site-header__content">
+        <div class="site-header__text">
+          <h1>CR-map - find your place to recover :)</h1>
+          <p class="site-subtitle">
+            <a
+              href="https://www.celebraterecovery.ca/ontario/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              https://www.celebraterecovery.ca/ontario/
+            </a>
+          </p>
+        </div>
+
+        <div class="site-header__logo-wrap">
+          <img
+            class="site-logo"
+            src="cr_logo.png"
+            alt="Celebrate Recovery logo"
+          />
+        </div>
+      </div>
     </header>
 
     <main class="main-layout">
@@ -39,7 +51,7 @@
               id="search-input"
               class="filter-input"
               type="search"
-              placeholder="by city/place/meet times..."
+              placeholder="Search by name, city, meeting time..."
               autocomplete="off"
             />
           </label>
@@ -157,6 +169,7 @@
   --color-sunday: #7b4ce2;
   --color-gold-text: #b88a00;
   --color-border: #dddddd;
+  --color-border-strong: #c9ced6;
   --color-text: #1f1f1f;
   --color-muted: #666666;
   --color-panel: #ffffff;
@@ -166,6 +179,8 @@
   --color-primary: #2457a6;
   --color-primary-hover: #1d4789;
   --color-primary-soft: #eef4ff;
+  --color-shadow-soft: 0 6px 18px rgba(24, 39, 75, 0.08);
+  --color-shadow-selected: 0 10px 24px rgba(36, 87, 166, 0.18);
 }
 
 html,
@@ -201,9 +216,21 @@ a {
 
 .site-header {
   flex: 0 0 auto;
-  padding: 16px 20px;
+  padding: 14px 20px;
   background: var(--color-panel);
   border-bottom: 1px solid var(--color-border);
+}
+
+.site-header__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.site-header__text {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .site-header h1 {
@@ -227,6 +254,23 @@ a {
 .site-subtitle a:hover,
 .site-subtitle a:focus-visible {
   text-decoration: underline;
+}
+
+.site-header__logo-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+}
+
+.site-logo {
+  display: block;
+  max-height: 56px;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .main-layout {
@@ -266,6 +310,7 @@ a {
 .filter-label {
   font-size: 0.9rem;
   color: #444444;
+  font-weight: 700;
 }
 
 .filter-input {
@@ -274,6 +319,11 @@ a {
   border: 1px solid #cccccc;
   border-radius: 8px;
   background: #ffffff;
+}
+
+.filter-input:focus-visible {
+  outline: 2px solid #1f1f1f;
+  outline-offset: 2px;
 }
 
 .day-toggle-group {
@@ -291,7 +341,12 @@ a {
   color: #000000;
   font-weight: 400;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 .day-toggle:hover {
@@ -429,15 +484,22 @@ a {
   padding: 12px;
   border: 1px solid var(--color-border);
   border-left: 6px solid transparent;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--color-soft);
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .location-card:hover {
   background: var(--color-soft-alt);
+  transform: translateY(-1px);
+  box-shadow: var(--color-shadow-soft);
 }
 
 .location-card:focus-visible {
@@ -446,8 +508,10 @@ a {
 }
 
 .location-card.is-selected {
-  border-color: #1f1f1f;
+  border-color: var(--color-primary);
   background: var(--color-primary-soft);
+  box-shadow: var(--color-shadow-selected);
+  transform: translateY(-1px);
 }
 
 .location-card.day-monday {
@@ -512,11 +576,37 @@ a {
 }
 
 .popup-content {
-  min-width: 200px;
+  min-width: 220px;
 }
 
 .popup-line {
   margin: 6px 0;
+}
+
+.popup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.popup-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.popup-action-link:hover,
+.popup-action-link:focus-visible {
+  background: var(--color-primary-soft);
 }
 
 .day-badge {
@@ -612,6 +702,14 @@ a {
     height: auto;
     min-height: 100vh;
     overflow: visible;
+  }
+
+  .site-header__content {
+    align-items: flex-start;
+  }
+
+  .site-logo {
+    max-height: 46px;
   }
 
   .main-layout {
@@ -712,7 +810,6 @@ const markersLayer = L.layerGroup().addTo(map);
 let allRows = [];
 let filteredRows = [];
 let selectedOrgId = null;
-let closestResult = null;
 let isLocatingUser = false;
 let shouldAutoFitMap = true;
 
@@ -862,6 +959,11 @@ function getCurrentPosition() {
   });
 }
 
+function buildGoogleMapsUrl(row) {
+  const destination = `${row.lat},${row.lng}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+}
+
 function setClosestButtonLoading(isLoading) {
   isLocatingUser = isLoading;
   closestMeetingEl.disabled = isLoading;
@@ -876,6 +978,7 @@ function buildPopupHtml(row) {
   const meetingLine = escapeHtml(formatMeetingLine(row));
   const notes = row.notes ? escapeHtml(row.notes) : '';
   const website = row.website ? String(row.website).trim() : '';
+  const mapsUrl = buildGoogleMapsUrl(row);
   const dayConfig = getDayConfig(row.meeting_day);
   const badgeHtml = dayConfig
     ? `<span class="day-badge ${dayConfig.badgeClass}">${escapeHtml(dayConfig.shortLabel)}</span>`
@@ -887,8 +990,14 @@ function buildPopupHtml(row) {
     : '';
 
   const websiteHtml = website
-    ? `<p class="popup-line"><a href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Visit website</a></p>`
+    ? `<a class="popup-action-link" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
     : '';
+
+  const mapsHtml = `
+    <a class="popup-action-link" href="${escapeHtml(mapsUrl)}" target="_blank" rel="noopener noreferrer">
+      Open in Google Maps
+    </a>
+  `;
 
   const notesHtml = notes
     ? `<p class="popup-line">${notes}</p>`
@@ -903,7 +1012,10 @@ function buildPopupHtml(row) {
       ${distanceHtml}
       ${badgeHtml}
       ${notesHtml}
-      ${websiteHtml}
+      <div class="popup-actions">
+        ${mapsHtml}
+        ${websiteHtml}
+      </div>
     </div>
   `;
 }
@@ -1053,7 +1165,6 @@ function renderMarkers(rows) {
 
     marker.on('click', () => {
       selectedOrgId = row.org_id;
-      closestResult = row;
       renderLocationList(filteredRows);
       scrollSelectedCardIntoView();
     });
@@ -1091,8 +1202,6 @@ function clearDistanceData() {
   allRows.forEach((row) => {
     delete row.distanceKm;
   });
-
-  closestResult = null;
 }
 
 function scrollSelectedCardIntoView() {
@@ -1236,7 +1345,6 @@ async function findClosestMeeting() {
       return;
     }
 
-    closestResult = closestRow;
     selectedOrgId = closestRow.org_id;
     shouldAutoFitMap = false;
 
@@ -1343,4 +1451,4 @@ locationListEl.addEventListener('click', (event) => {
 loadLocations();
 
 
-Generated: 03/28/2026 15:37:35
+Generated: 03/28/2026 16:09:21

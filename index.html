@@ -17,16 +17,28 @@
 <body>
   <div id="app">
     <header class="site-header">
-      <h1>CR-map - find your place to recover :)</h1>
-      <p class="site-subtitle">
-        <a
-          href="https://www.celebraterecovery.ca/ontario/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          https://www.celebraterecovery.ca/ontario/
-        </a>
-      </p>
+      <div class="site-header__content">
+        <div class="site-header__text">
+          <h1>CR-map - find your place to recover :)</h1>
+          <p class="site-subtitle">
+            <a
+              href="https://www.celebraterecovery.ca/ontario/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              https://www.celebraterecovery.ca/ontario/
+            </a>
+          </p>
+        </div>
+
+        <div class="site-header__logo-wrap">
+          <img
+            class="site-logo"
+            src="cr_logo.png"
+            alt="Celebrate Recovery logo"
+          />
+        </div>
+      </div>
     </header>
 
     <main class="main-layout">
@@ -38,7 +50,7 @@
               id="search-input"
               class="filter-input"
               type="search"
-              placeholder="by city/place/meet times..."
+              placeholder="Search by name, city, meeting time..."
               autocomplete="off"
             />
           </label>
