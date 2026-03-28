@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Celebrate Recovery Map</title>
+  <title>CR-map - find your place to recover</title>
 
   <link
     rel="stylesheet"
@@ -17,17 +17,20 @@
 <body>
   <div id="app">
     <header class="site-header">
-      <h1>Celebrate Recovery Map</h1>
-      <p class="site-subtitle">Ontario locations</p>
+      <h1>CR-map - find your place to recover</h1>
+      <p class="site-subtitle">
+        <a
+          href="https://www.celebraterecovery.ca/ontario/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          https://www.celebraterecovery.ca/ontario/
+        </a>
+      </p>
     </header>
 
     <main class="main-layout">
-      <section class="sidebar" aria-label="Location details">
-        <h2>Locations</h2>
-        <p class="sidebar-intro">
-          Find Celebrate Recovery locations across Ontario.
-        </p>
-
+      <section class="sidebar" aria-label="Location filters and results">
         <div class="filters" aria-label="Filters">
           <label class="filter-group" for="search-input">
             <span class="filter-label">Search</span>
@@ -48,20 +51,48 @@
               role="group"
               aria-label="Filter by meeting day"
             >
-              <button type="button" class="day-toggle" data-day="Monday" aria-pressed="false">Mon</button>
-              <button type="button" class="day-toggle" data-day="Tuesday" aria-pressed="false">Tue</button>
-              <button type="button" class="day-toggle" data-day="Wednesday" aria-pressed="false">Wed</button>
-              <button type="button" class="day-toggle" data-day="Thursday" aria-pressed="false">Thu</button>
-              <button type="button" class="day-toggle" data-day="Friday" aria-pressed="false">Fri</button>
-              <button type="button" class="day-toggle" data-day="Saturday" aria-pressed="false">Sat</button>
-              <button type="button" class="day-toggle" data-day="Sunday" aria-pressed="false">Sun</button>
+              <button
+                type="button"
+                class="day-toggle day-toggle--monday"
+                data-day="Monday"
+                aria-pressed="false"
+              >
+                Mon
+              </button>
+              <button
+                type="button"
+                class="day-toggle day-toggle--tuesday"
+                data-day="Tuesday"
+                aria-pressed="false"
+              >
+                Tue
+              </button>
+              <button
+                type="button"
+                class="day-toggle day-toggle--wednesday"
+                data-day="Wednesday"
+                aria-pressed="false"
+              >
+                Wed
+              </button>
+              <button
+                type="button"
+                class="day-toggle day-toggle--thursday"
+                data-day="Thursday"
+                aria-pressed="false"
+              >
+                Thu
+              </button>
+              <button
+                type="button"
+                class="day-toggle day-toggle--friday"
+                data-day="Friday"
+                aria-pressed="false"
+              >
+                Fri
+              </button>
             </div>
           </div>
-
-          <label class="checkbox-row" for="hybrid-only">
-            <input id="hybrid-only" type="checkbox" />
-            <span>Hybrid only</span>
-          </label>
 
           <button id="reset-filters" class="reset-button" type="button">
             Reset filters
