@@ -261,14 +261,46 @@ function setClosestButtonLoading(isLoading) {
   closestMeetingEl.textContent = isLoading ? 'Finding closest meeting…' : 'Find closest meeting';
 }
 
-function getPopupOffsetPixels() {
+function getPopupSizeConfig() {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
   if (isMobile) {
-    return { x: 0, y: 120 };
+    return {
+      maxWidth: 240,
+      minWidth: 196
+    };
   }
 
-  return { x: -120, y: 110 };
+  return {
+    maxWidth: 248,
+    minWidth: 208
+  };
+}
+
+function getRouteFitPadding() {
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+  if (isMobile) {
+    return {
+      paddingTopLeft: [20, 150],
+      paddingBottomRight: [20, 24]
+    };
+  }
+
+  return {
+    paddingTopLeft: [36, 30],
+    paddingBottomRight: [280, 34]
+  };
+}
+
+function getSingleLocationFocusOffset() {
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+  if (isMobile) {
+    return { x: 0, y: 112 };
+  }
+
+  return { x: -112, y: 96 };
 }
 
 function buildPopupHtml(row) {
@@ -441,18 +473,23 @@ function fitMapToRows(rows) {
   }
 }
 
-function fitMapToClosestSession() {
-  if (!closestSession || !closestSession.closestRow) {
+function fitMapToClosestSession(rowOverride = null) {
+  if (!closestSession || !closestSession.userLat || !(rowOverride || closestSession.closestRow)) {
     return;
   }
 
+  const activeRow = rowOverride || closestSession.closestRow;
   const bounds = L.latLngBounds([
     [closestSession.userLat, closestSession.userLng],
-    [closestSession.closestRow.lat, closestSession.closestRow.lng]
+    [activeRow.lat, activeRow.lng]
   ]);
 
+  const padding = getRouteFitPadding();
+
   map.fitBounds(bounds, {
-    padding: [40, 40]
+    paddingTopLeft: padding.paddingTopLeft,
+    paddingBottomRight: padding.paddingBottomRight,
+    maxZoom: FOCUSED_ZOOM
   });
 }
 
@@ -460,14 +497,16 @@ function renderMarkers(rows) {
   markersLayer.clearLayers();
   markerByOrgId.clear();
 
+  const popupSize = getPopupSizeConfig();
+
   rows.forEach((row) => {
     const marker = L.marker([row.lat, row.lng], {
       icon: buildMarkerIcon(row)
     }).bindPopup(buildPopupHtml(row), {
       autoPan: true,
       keepInView: true,
-      maxWidth: 300,
-      minWidth: 220
+      maxWidth: popupSize.maxWidth,
+      minWidth: popupSize.minWidth
     });
 
     marker.on('click', () => {
@@ -653,7 +692,7 @@ function applyFilters() {
     if (marker) {
       const latLng = marker.getLatLng();
       const nextZoom = Math.max(map.getZoom(), FOCUSED_ZOOM);
-      const offset = getPopupOffsetPixels();
+      const offset = getSingleLocationFocusOffset();
       const point = map.project(latLng, nextZoom).subtract([offset.x, offset.y]);
       const targetLatLng = map.unproject(point, nextZoom);
 
@@ -685,24 +724,32 @@ function focusLocation(orgId, options = {}) {
     closestSession.closestRow = selectedRow;
     renderClosestSessionVisuals();
     updateStatus(filteredRows);
+
+    fitMapToClosestSession(selectedRow);
+
+    if (openPopup) {
+      window.setTimeout(() => {
+        marker.openPopup();
+      }, 180);
+    }
+  } else {
+    const latLng = marker.getLatLng();
+    const nextZoom = keepCurrentZoom ? map.getZoom() : Math.max(map.getZoom(), FOCUSED_ZOOM);
+    const offset = getSingleLocationFocusOffset();
+    const point = map.project(latLng, nextZoom).subtract([offset.x, offset.y]);
+    const targetLatLng = map.unproject(point, nextZoom);
+
+    map.setView(targetLatLng, nextZoom, { animate: true });
+
+    if (openPopup) {
+      window.setTimeout(() => {
+        marker.openPopup();
+      }, 150);
+    }
   }
 
   renderLocationList(filteredRows);
   scrollSelectedCardIntoView();
-
-  const latLng = marker.getLatLng();
-  const nextZoom = keepCurrentZoom ? map.getZoom() : Math.max(map.getZoom(), FOCUSED_ZOOM);
-  const offset = getPopupOffsetPixels();
-  const point = map.project(latLng, nextZoom).subtract([offset.x, offset.y]);
-  const targetLatLng = map.unproject(point, nextZoom);
-
-  map.setView(targetLatLng, nextZoom, { animate: true });
-
-  if (openPopup) {
-    window.setTimeout(() => {
-      marker.openPopup();
-    }, 150);
-  }
 }
 
 function toggleDay(day) {
@@ -784,13 +831,13 @@ async function findClosestMeeting() {
     renderLocationList(filteredRows);
     updateStatus(filteredRows);
     scrollSelectedCardIntoView();
-    fitMapToClosestSession();
+    fitMapToClosestSession(closestRow);
 
     const marker = markerByOrgId.get(String(closestRow.org_id));
     if (marker) {
       window.setTimeout(() => {
         marker.openPopup();
-      }, 150);
+      }, 180);
     }
   } catch (error) {
     clearClosestSession();

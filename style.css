@@ -24,9 +24,9 @@
   --color-primary-soft: #eef4ff;
   --color-shadow-soft: 0 6px 18px rgba(24, 39, 75, 0.08);
   --color-shadow-selected: 0 10px 24px rgba(36, 87, 166, 0.18);
-  --color-user-marker: #111111;
-  --color-user-marker-face: #ffd84d;
-  --popup-max-width: 280px;
+  --color-user-marker: rgba(17, 17, 17, 0.72);
+  --color-user-marker-face: rgba(255, 224, 110, 0.92);
+  --popup-max-width: 240px;
 }
 
 html,
@@ -420,13 +420,13 @@ a {
 
 .leaflet-popup-content-wrapper {
   padding: 0;
-  border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(24, 39, 75, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(24, 39, 75, 0.16);
 }
 
 .leaflet-popup-content {
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.35;
   width: auto !important;
   min-width: 0 !important;
 }
@@ -436,52 +436,52 @@ a {
 }
 
 .popup-card {
-  min-width: 220px;
+  min-width: 208px;
   max-width: var(--popup-max-width);
-  padding: 12px 12px 12px 14px;
+  padding: 10px 10px 10px 12px;
   background: var(--color-soft);
   border-left: 6px solid transparent;
   border-radius: 12px;
 }
 
 .popup-title {
-  margin: 0 0 6px;
-  font-size: 1rem;
+  margin: 0 0 4px;
+  font-size: 0.98rem;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .popup-address {
-  margin: 0 0 4px;
-  font-size: 0.9rem;
+  margin: 0 0 3px;
+  font-size: 0.86rem;
   color: var(--color-muted);
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .popup-meeting {
-  margin: 0 0 4px;
-  font-size: 0.92rem;
-  line-height: 1.35;
+  margin: 0 0 3px;
+  font-size: 0.88rem;
+  line-height: 1.25;
 }
 
 .popup-distance {
-  margin: 0 0 6px;
-  font-size: 0.92rem;
+  margin: 0 0 4px;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
 .popup-notes {
-  margin: 0 0 8px;
-  font-size: 0.86rem;
+  margin: 0 0 6px;
+  font-size: 0.8rem;
   color: var(--color-muted);
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .popup-actions {
   display: flex;
   flex-wrap: nowrap;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .popup-btn {
@@ -489,13 +489,13 @@ a {
   flex: 1 1 0;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
-  padding: 7px 10px;
+  min-height: 30px;
+  padding: 5px 8px;
   border: 1px solid var(--color-primary);
   border-radius: 8px;
   background: #ffffff;
   color: var(--color-primary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-decoration: none;
   text-align: center;
@@ -591,9 +591,10 @@ a {
   height: 30px;
   border-radius: 50%;
   background: var(--color-user-marker-face);
-  border: 3px solid var(--color-user-marker);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  border: 2px solid var(--color-user-marker);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.26);
   position: relative;
+  backdrop-filter: saturate(0.95);
 }
 
 .user-marker::before,
@@ -601,29 +602,30 @@ a {
   content: "";
   position: absolute;
   top: 8px;
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   background: var(--color-user-marker);
   border-radius: 50%;
 }
 
 .user-marker::before {
-  left: 7px;
+  left: 8px;
 }
 
 .user-marker::after {
-  right: 7px;
+  right: 8px;
 }
 
 .user-marker__mouth {
   position: absolute;
   left: 50%;
-  bottom: 6px;
-  width: 12px;
-  height: 6px;
-  border-bottom: 3px solid var(--color-user-marker);
-  border-radius: 0 0 12px 12px;
+  bottom: 7px;
+  width: 10px;
+  height: 4px;
+  border-bottom: 2px solid var(--color-user-marker);
+  border-radius: 0 0 10px 10px;
   transform: translateX(-50%);
+  opacity: 0.95;
 }
 
 .user-popup-label {
@@ -677,6 +679,7 @@ a {
   }
 
   .popup-card {
-    max-width: 240px;
+    max-width: 220px;
+    min-width: 196px;
   }
 }
