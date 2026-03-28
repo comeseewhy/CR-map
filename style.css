@@ -55,11 +55,45 @@ body {
 
 .sidebar h2 {
   margin-top: 0;
+  margin-bottom: 12px;
   font-size: 1rem;
 }
 
-.sidebar p {
+.sidebar-intro {
+  margin-top: 0;
   line-height: 1.5;
+}
+
+.status {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: #f3f4f6;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.location-list {
+  display: grid;
+  gap: 12px;
+}
+
+.location-card {
+  padding: 12px;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.location-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.location-card p {
+  margin: 4px 0;
+  line-height: 1.4;
+  font-size: 0.95rem;
 }
 
 .map-panel {
@@ -73,6 +107,14 @@ body {
 
 .leaflet-popup-content {
   line-height: 1.45;
+}
+
+.popup-content {
+  min-width: 200px;
+}
+
+.popup-line {
+  margin: 6px 0;
 }
 
 @media (max-width: 768px) {
