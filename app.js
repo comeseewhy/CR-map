@@ -1,6 +1,7 @@
 const ONTARIO_CENTER = [43.7, -79.4];
 const INITIAL_ZOOM = 6;
 const FOCUSED_ZOOM = 11;
+const ZOOM_BUFFER = 0.45;
 
 const DAY_CONFIG = {
   Monday: {
@@ -65,6 +66,7 @@ const resetFiltersEl = document.getElementById('reset-filters');
 const closestMeetingEl = document.getElementById('closest-meeting');
 const dayToggleGroupEl = document.getElementById('day-toggle-group');
 const dayToggleEls = Array.from(document.querySelectorAll('.day-toggle'));
+const siteHeaderEl = document.querySelector('.site-header');
 
 const map = L.map('map').setView(ONTARIO_CENTER, INITIAL_ZOOM);
 
@@ -267,29 +269,41 @@ function getPopupSizeConfig() {
   if (isMobile) {
     return {
       maxWidth: 240,
-      minWidth: 196
+      minWidth: 196,
+      estimatedHeight: 132
     };
   }
 
   return {
     maxWidth: 248,
-    minWidth: 208
+    minWidth: 208,
+    estimatedHeight: 140
   };
 }
 
-function getRouteFitPadding() {
+function getHeaderCompensation() {
+  const headerHeight = siteHeaderEl ? siteHeaderEl.offsetHeight : 72;
+  return Math.max(32, Math.round(headerHeight * 0.45));
+}
+
+function getBaseMapPadding() {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const headerCompensation = getHeaderCompensation();
 
   if (isMobile) {
     return {
-      paddingTopLeft: [20, 150],
-      paddingBottomRight: [20, 24]
+      top: 38 + headerCompensation,
+      right: 24,
+      bottom: 34,
+      left: 24
     };
   }
 
   return {
-    paddingTopLeft: [36, 30],
-    paddingBottomRight: [280, 34]
+    top: 30 + headerCompensation,
+    right: 34,
+    bottom: 34,
+    left: 34
   };
 }
 
@@ -297,10 +311,121 @@ function getSingleLocationFocusOffset() {
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
   if (isMobile) {
-    return { x: 0, y: 112 };
+    return { x: 0, y: 114 };
   }
 
-  return { x: -112, y: 96 };
+  return { x: -116, y: 98 };
+}
+
+function normalizeVector(x, y) {
+  const length = Math.hypot(x, y);
+
+  if (!length) {
+    return { x: 0, y: -1 };
+  }
+
+  return {
+    x: x / length,
+    y: y / length
+  };
+}
+
+function pickPopupOffset(row) {
+  const popupSize = getPopupSizeConfig();
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const markerPoint = map.latLngToContainerPoint([row.lat, row.lng]);
+  const mapSize = map.getSize();
+
+  let popupVector = { x: 0, y: -1 };
+
+  if (closestSession && Number.isFinite(closestSession.userLat) && Number.isFinite(closestSession.userLng)) {
+    const userPoint = map.latLngToContainerPoint([closestSession.userLat, closestSession.userLng]);
+    const routeVector = {
+      x: markerPoint.x - userPoint.x,
+      y: markerPoint.y - userPoint.y
+    };
+
+    const perpA = normalizeVector(-routeVector.y, routeVector.x);
+    const perpB = normalizeVector(routeVector.y, -routeVector.x);
+
+    const candidateDistance = isMobile ? 58 : 72;
+    const candidates = [
+      {
+        x: perpA.x * candidateDistance,
+        y: perpA.y * candidateDistance
+      },
+      {
+        x: perpB.x * candidateDistance,
+        y: perpB.y * candidateDistance
+      }
+    ];
+
+    const estimatePopupBounds = (offset) => {
+      const centerX = markerPoint.x + offset.x;
+      const bottomY = markerPoint.y + offset.y - 10;
+      const width = popupSize.maxWidth;
+      const height = popupSize.estimatedHeight;
+
+      const left = centerX - width / 2;
+      const right = centerX + width / 2;
+      const top = bottomY - height;
+      const bottom = bottomY;
+
+      const visibleLeft = Math.max(0, left);
+      const visibleRight = Math.min(mapSize.x, right);
+      const visibleTop = Math.max(0, top);
+      const visibleBottom = Math.min(mapSize.y, bottom);
+
+      const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const visibleArea = visibleWidth * visibleHeight;
+      const totalArea = width * height;
+
+      const topBias = (mapSize.y - top) * 0.01;
+      const sideBias = Math.min(centerX, mapSize.x - centerX) * 0.005;
+
+      return (visibleArea / totalArea) + topBias + sideBias;
+    };
+
+    popupVector = estimatePopupBounds(candidates[0]) >= estimatePopupBounds(candidates[1])
+      ? normalizeVector(candidates[0].x, candidates[0].y)
+      : normalizeVector(candidates[1].x, candidates[1].y);
+  } else {
+    popupVector = normalizeVector(isMobile ? 0 : -1, -1);
+  }
+
+  const offsetDistance = isMobile ? 54 : 66;
+
+  return L.point(
+    Math.round(popupVector.x * offsetDistance),
+    Math.round(popupVector.y * offsetDistance)
+  );
+}
+
+function getPaddingForPopupOffset(offset) {
+  const popupSize = getPopupSizeConfig();
+  const base = getBaseMapPadding();
+
+  const leftNeed = offset.x < 0 ? Math.abs(offset.x) + Math.round(popupSize.maxWidth * 0.55) : 0;
+  const rightNeed = offset.x > 0 ? Math.abs(offset.x) + Math.round(popupSize.maxWidth * 0.55) : 0;
+  const topNeed = offset.y < 0 ? Math.abs(offset.y) + popupSize.estimatedHeight + 12 : 0;
+  const bottomNeed = offset.y > 0 ? Math.abs(offset.y) + 34 : 0;
+
+  return {
+    paddingTopLeft: [
+      Math.max(base.left, leftNeed + 16),
+      Math.max(base.top, topNeed + 16)
+    ],
+    paddingBottomRight: [
+      Math.max(base.right, rightNeed + 16),
+      Math.max(base.bottom, bottomNeed + 16)
+    ]
+  };
+}
+
+function applyZoomBuffer() {
+  const nextZoom = map.getZoom() - ZOOM_BUFFER;
+  map.setZoom(nextZoom, { animate: false });
 }
 
 function buildPopupHtml(row) {
@@ -473,24 +598,40 @@ function fitMapToRows(rows) {
   }
 }
 
-function fitMapToClosestSession(rowOverride = null) {
+function updateMarkerPopupOffset(marker, row) {
+  const popup = marker.getPopup();
+
+  if (!popup) {
+    return L.point(0, 0);
+  }
+
+  const offset = pickPopupOffset(row);
+  popup.options.offset = offset;
+  return offset;
+}
+
+function fitMapToRouteAndPopup(rowOverride = null) {
   if (!closestSession || !closestSession.userLat || !(rowOverride || closestSession.closestRow)) {
     return;
   }
 
   const activeRow = rowOverride || closestSession.closestRow;
+  const marker = markerByOrgId.get(String(activeRow.org_id));
+  const offset = marker ? updateMarkerPopupOffset(marker, activeRow) : L.point(0, 0);
+  const padding = getPaddingForPopupOffset(offset);
+
   const bounds = L.latLngBounds([
     [closestSession.userLat, closestSession.userLng],
     [activeRow.lat, activeRow.lng]
   ]);
-
-  const padding = getRouteFitPadding();
 
   map.fitBounds(bounds, {
     paddingTopLeft: padding.paddingTopLeft,
     paddingBottomRight: padding.paddingBottomRight,
     maxZoom: FOCUSED_ZOOM
   });
+
+  applyZoomBuffer();
 }
 
 function renderMarkers(rows) {
@@ -506,7 +647,10 @@ function renderMarkers(rows) {
       autoPan: true,
       keepInView: true,
       maxWidth: popupSize.maxWidth,
-      minWidth: popupSize.minWidth
+      minWidth: popupSize.minWidth,
+      offset: L.point(0, -8),
+      autoPanPaddingTopLeft: [24, getBaseMapPadding().top],
+      autoPanPaddingBottomRight: [24, 24]
     });
 
     marker.on('click', () => {
@@ -644,6 +788,20 @@ function sortRowsForDisplay(rows) {
   });
 }
 
+function openPopupForRow(row) {
+  const marker = markerByOrgId.get(String(row.org_id));
+
+  if (!marker) {
+    return;
+  }
+
+  updateMarkerPopupOffset(marker, row);
+
+  window.setTimeout(() => {
+    marker.openPopup();
+  }, 190);
+}
+
 function applyFilters() {
   const searchTerm = normalizeSearchTerm(searchInputEl.value);
 
@@ -680,7 +838,7 @@ function applyFilters() {
   updateStatus(filteredRows);
 
   if (closestSession && closestSession.closestRow && selectedOrgId === String(closestSession.closestRow.org_id)) {
-    fitMapToClosestSession();
+    fitMapToRouteAndPopup();
     return;
   }
 
@@ -688,14 +846,16 @@ function applyFilters() {
     fitMapToRows(filteredRows);
   } else if (selectedOrgId) {
     const marker = markerByOrgId.get(String(selectedOrgId));
+    const selectedRow = filteredRows.find((row) => String(row.org_id) === String(selectedOrgId));
 
-    if (marker) {
+    if (marker && selectedRow) {
       const latLng = marker.getLatLng();
       const nextZoom = Math.max(map.getZoom(), FOCUSED_ZOOM);
       const offset = getSingleLocationFocusOffset();
       const point = map.project(latLng, nextZoom).subtract([offset.x, offset.y]);
       const targetLatLng = map.unproject(point, nextZoom);
 
+      updateMarkerPopupOffset(marker, selectedRow);
       map.setView(targetLatLng, nextZoom, { animate: false });
     }
   }
@@ -724,13 +884,10 @@ function focusLocation(orgId, options = {}) {
     closestSession.closestRow = selectedRow;
     renderClosestSessionVisuals();
     updateStatus(filteredRows);
-
-    fitMapToClosestSession(selectedRow);
+    fitMapToRouteAndPopup(selectedRow);
 
     if (openPopup) {
-      window.setTimeout(() => {
-        marker.openPopup();
-      }, 180);
+      openPopupForRow(selectedRow);
     }
   } else {
     const latLng = marker.getLatLng();
@@ -739,12 +896,11 @@ function focusLocation(orgId, options = {}) {
     const point = map.project(latLng, nextZoom).subtract([offset.x, offset.y]);
     const targetLatLng = map.unproject(point, nextZoom);
 
+    updateMarkerPopupOffset(marker, selectedRow);
     map.setView(targetLatLng, nextZoom, { animate: true });
 
     if (openPopup) {
-      window.setTimeout(() => {
-        marker.openPopup();
-      }, 150);
+      openPopupForRow(selectedRow);
     }
   }
 
@@ -831,14 +987,8 @@ async function findClosestMeeting() {
     renderLocationList(filteredRows);
     updateStatus(filteredRows);
     scrollSelectedCardIntoView();
-    fitMapToClosestSession(closestRow);
-
-    const marker = markerByOrgId.get(String(closestRow.org_id));
-    if (marker) {
-      window.setTimeout(() => {
-        marker.openPopup();
-      }, 180);
-    }
+    fitMapToRouteAndPopup(closestRow);
+    openPopupForRow(closestRow);
   } catch (error) {
     clearClosestSession();
 
@@ -934,6 +1084,13 @@ locationListEl.addEventListener('click', (event) => {
   }
 
   focusLocation(card.dataset.orgId);
+});
+
+window.addEventListener('resize', () => {
+  if (selectedOrgId && closestSession && closestSession.closestRow) {
+    fitMapToRouteAndPopup();
+    openPopupForRow(closestSession.closestRow);
+  }
 });
 
 loadLocations();
