@@ -470,6 +470,14 @@ a {
   font-weight: 700;
 }
 
+.popup-distance-note {
+  font-size: 0.72em;
+  font-weight: 400;
+  color: var(--color-muted);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
 .popup-notes {
   margin: 0 0 6px;
   font-size: 0.8rem;
